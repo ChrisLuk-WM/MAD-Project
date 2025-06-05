@@ -8,14 +8,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.mad_project.content_downloader.HikingTrailImageDownloader;
 import com.example.mad_project.database.AppDatabase;
 import com.example.mad_project.database.entities.TrailEntity;
+import com.example.mad_project.ui.BaseActivity;
 import com.example.mad_project.utils.DownloadManager;
+import com.example.mad_project.utils.StatisticsCalculator;
 
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
     private AppDatabase database;
     private HikingTrailImageDownloader imageDownloader;
+    private StatisticsCalculator statisticsCalculator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,27 +32,40 @@ public class MainActivity extends AppCompatActivity {
 
         // Load data
         imageDownloader.loadTrailsData();
+        initCoreComponents();
 
         // Observe data
-        observeTrailsData();
+        // observeTrailsData();
     }
 
-    private void observeTrailsData() {
-        database.trailDao().getAllTrails().observe(this, trails -> {
-            if (trails != null && !trails.isEmpty()) {
-                Log.d(TAG, "Loaded " + trails.size() + " trails from database");
-                updateUI(trails);
-            }
-        });
+    @Override
+    protected int getLayoutResourceId() {
+        return R.layout.activity_main;
     }
 
-    private void updateUI(List<TrailEntity> trails) {
-        if (!trails.isEmpty()) {
-            TrailEntity firstTrail = trails.get(0);
-            Log.d(TAG, "First trail: " + firstTrail.getTrailName() +
-                    ", Difficulty: " + firstTrail.getDifficultyRating() +
-                    ", Sight: " + firstTrail.getSightRating());
-        }
+    @Override
+    protected void initViews() {
+        // Initialize core components only
+    }
+
+    @Override
+    protected void setupActions() {
+        // Setup core component interactions
+    }
+
+    @Override
+    protected boolean showBackButton() {
+        return false; // No back button on main screen
+    }
+
+    // Core component initialization and signal handling
+    private void initCoreComponents() {
+        statisticsCalculator = StatisticsCalculator.getInstance(this);
+        // Initialize other core components
+    }
+
+    private void setupSignalTransmission() {
+        // Setup communication between core components
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.example.mad_project.database.entities;
 
+import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
@@ -58,6 +59,21 @@ public class TrailEntity {
     public String getThumbnailPath() { return thumbnailPath; }
     public void setThumbnailPath(String thumbnailPath) { this.thumbnailPath = thumbnailPath; }
 
-    public long getLastUpdated() { return lastUpdated; }
-    public void setLastUpdated(long lastUpdated) { this.lastUpdated = lastUpdated; }
+    public long getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(long lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
+    public boolean isInited() {
+        long SEVEN_DAYS_IN_MILLIS = 7 * 24 * 60 * 60 * 1000L;
+        long currentTime = System.currentTimeMillis();
+
+        // Return false if:
+        // 1. Images are not initialized
+        // 2. Last update was more than 7 days ago
+        return (currentTime - lastUpdated) < SEVEN_DAYS_IN_MILLIS;
+    }
 }

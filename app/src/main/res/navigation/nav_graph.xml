@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.mad_project.ui.home.HomeFragment"
+        android:label="Home">
+        <action
+            android:id="@+id/action_home_to_profile"
+            app:destination="@id/profileActivity" />
+        <action
+            android:id="@+id/action_home_to_route"
+            app:destination="@id/routePlanningActivity" />
+        <action
+            android:id="@+id/action_home_to_statistics"
+            app:destination="@id/statisticsActivity" />
+    </fragment>
+
+    <activity
+        android:id="@+id/profileActivity"
+        android:name="com.example.mad_project.ui.profile.MyProfileActivity"
+        android:label="My Profile" />
+
+    <activity
+        android:id="@+id/routePlanningActivity"
+        android:name="com.example.mad_project.ui.route.RoutePlanningActivity"
+        android:label="Route Planning" />
+
+    <activity
+        android:id="@+id/statisticsActivity"
+        android:name="com.example.mad_project.ui.statistics.StatisticsActivity"
+        android:label="Statistics" />
+</navigation>

@@ -9,6 +9,7 @@ import android.util.Log;
 import com.example.mad_project.constants.DownloadError;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -166,7 +167,7 @@ public class DownloadManager {
                         continue;
                     }
 
-                    Log.d(TAG, "Worker " + workerId + " processing download: " + request.url);
+                    // Log.d(TAG, "Worker " + workerId + " processing download: " + request.url);
                     DownloadTask task = new DownloadTask(request.url, request.destination, request.resumePosition);
 
                     synchronized (activeDownloads) {
@@ -240,7 +241,7 @@ public class DownloadManager {
             }
             DownloadRequest request = new DownloadRequest(url, destination, resumePosition);
             downloadQueue.put(request);
-            Log.d(TAG, "Added to download queue: " + url);
+            // Log.d(TAG, "Added to download queue: " + url);
         } catch (InterruptedException e) {
             Log.e(TAG, "Failed to add download to queue: " + url, e);
         }
@@ -343,6 +344,10 @@ public class DownloadManager {
         private HttpURLConnection connection;
         private int retryCount = 0;
         private final Object lock = new Object();
+        private static final int MAX_ERROR_RETRIES = 3;
+        private int errorRetryCount = 0;
+        private boolean isRetrying = false;
+
 
         public DownloadTask(String url, File destination, Long resumePosition) {
             this.url = url;
@@ -352,6 +357,9 @@ public class DownloadManager {
         }
 
         private void download() throws IOException {
+            errorRetryCount = 0;
+            isRetrying = false;
+
             while (retryCount < MAX_RETRIES && !isCancelled.get()) {
                 try {
                     if (!isNetworkAvailable.get()) {
@@ -361,6 +369,12 @@ public class DownloadManager {
                     }
 
                     synchronized (lock) {
+                        // Clean up any existing connection
+                        if (connection != null) {
+                            connection.disconnect();
+                            connection = null;
+                        }
+
                         connection = (HttpURLConnection) new URL(url).openConnection();
                         connection.setConnectTimeout(CONNECTION_TIMEOUT);
                         connection.setReadTimeout(READ_TIMEOUT);
@@ -372,46 +386,66 @@ public class DownloadManager {
                         connection.connect();
 
                         if (!isStorageAvailable(connection.getContentLength())) {
-                            handleError(DownloadError.INSUFFICIENT_STORAGE, "Insufficient storage space");
+                            skipDownload(DownloadError.INSUFFICIENT_STORAGE, "Insufficient storage space");
                             return;
                         }
 
                         downloadFile();
                         return;
                     }
-                } catch (SocketTimeoutException e) {
-                    handleError(DownloadError.CONNECTION_TIMEOUT, "Connection timed out");
-                } catch (IOException e) {
-                    handleError(DownloadError.CONNECTION_LOST, "Connection lost: " + e.getMessage());
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    handleError(DownloadError.UNEXPECTED_ERROR, "Download interrupted");
-                    break;
                 } catch (Exception e) {
-                    handleError(DownloadError.UNEXPECTED_ERROR, "Unexpected error: " + e.getMessage());
+                    handleError(determineError(e), e.getMessage());
                 } finally {
+                    // Always clean up connection
                     if (connection != null) {
                         connection.disconnect();
-                    }
-                }
-
-                retryCount++;
-                if (retryCount < MAX_RETRIES) {
-                    try {
-                        Thread.sleep(RETRY_DELAY);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        break;
+                        connection = null;
                     }
                 }
             }
+        }
 
-            if (retryCount >= MAX_RETRIES) {
-                handleError(DownloadError.CONNECTION_LOST, "Max retries exceeded");
+        private DownloadError determineError(Exception e) {
+            if (e instanceof SocketTimeoutException) {
+                return DownloadError.CONNECTION_TIMEOUT;
+            } else if (e instanceof IOException) {
+                return DownloadError.CONNECTION_LOST;
+            } else {
+                return DownloadError.UNEXPECTED_ERROR;
             }
         }
 
         private void downloadFile() throws IOException {
+            // Check HTTP response code before attempting to download
+            int responseCode = connection.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK &&
+                    responseCode != HttpURLConnection.HTTP_PARTIAL) {
+
+                switch (responseCode) {
+                    case HttpURLConnection.HTTP_NOT_FOUND: // 404
+                        handleError(DownloadError.INVALID_URL,
+                                "File not found (404) for URL: " + url);
+                        return;
+                    case HttpURLConnection.HTTP_FORBIDDEN: // 403
+                        handleError(DownloadError.ACCESS_DENIED,
+                                "Access forbidden (403) for URL: " + url);
+                        return;
+                    case HttpURLConnection.HTTP_UNAUTHORIZED: // 401
+                        handleError(DownloadError.ACCESS_DENIED,
+                                "Unauthorized access (401) for URL: " + url);
+                        return;
+                    case HttpURLConnection.HTTP_GATEWAY_TIMEOUT: // 504
+                    case HttpURLConnection.HTTP_CLIENT_TIMEOUT: // 408
+                        handleError(DownloadError.CONNECTION_TIMEOUT,
+                                "Connection timeout ("+responseCode+") for URL: " + url);
+                        return;
+                    default:
+                        handleError(DownloadError.CONNECTION_LOST,
+                                "Server returned error code: " + responseCode + " for URL: " + url);
+                        return;
+                }
+            }
+
             try (InputStream input = connection.getInputStream();
                  FileOutputStream output = new FileOutputStream(destination, bytesDownloaded > 0)) {
 
@@ -448,6 +482,16 @@ public class DownloadManager {
                 }
 
                 handleComplete();
+            } catch (IOException e) {
+                // Check if the error is due to HTTP response code
+                if (e instanceof FileNotFoundException &&
+                        connection.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+                    handleError(DownloadError.INVALID_URL,
+                            "File not found (404) for URL: " + url);
+                } else {
+                    handleError(DownloadError.CONNECTION_LOST,
+                            "Error downloading file: " + e.getMessage());
+                }
             }
         }
 
@@ -458,13 +502,93 @@ public class DownloadManager {
         }
 
         private void handleError(DownloadError error, String message) {
+            // Prevent recursive error handling
+            if (isRetrying) {
+                skipDownload(error, "Error during retry: " + message);
+                return;
+            }
+
+            if (error == DownloadError.NETWORK_UNAVAILABLE) {
+                // For network unavailability, just notify and keep in queue
+                if (downloadCallback != null) {
+                    downloadCallback.onError(url, error, message);
+                }
+                return;
+            }
+
+            // For other errors, attempt retry
+            if (errorRetryCount < MAX_ERROR_RETRIES) {
+                errorRetryCount++;
+                Log.d(TAG, "Retrying download for " + url + " (Attempt " + errorRetryCount + " of " + MAX_ERROR_RETRIES + ")");
+
+                try {
+                    // Wait before retry
+                    Thread.sleep(RETRY_DELAY);
+
+                    // Clean up existing connection
+                    if (connection != null) {
+                        connection.disconnect();
+                        connection = null;
+                    }
+
+                    // Mark as retrying
+                    isRetrying = true;
+
+                    // Create new connection and try download
+                    retryDownload();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    skipDownload(error, "Download interrupted during retry");
+                } finally {
+                    isRetrying = false;
+                }
+            } else {
+                // Max retries reached, skip this file
+                skipDownload(error, "Max retries exceeded: " + message);
+            }
+        }
+
+        private void retryDownload() {
+            try {
+                if (!isNetworkAvailable.get()) {
+                    skipDownload(DownloadError.NETWORK_UNAVAILABLE, "Network is unavailable");
+                    return;
+                }
+
+                synchronized (lock) {
+                    connection = (HttpURLConnection) new URL(url).openConnection();
+                    connection.setConnectTimeout(CONNECTION_TIMEOUT);
+                    connection.setReadTimeout(READ_TIMEOUT);
+
+                    if (bytesDownloaded > 0) {
+                        connection.setRequestProperty("Range", "bytes=" + bytesDownloaded + "-");
+                    }
+
+                    connection.connect();
+
+                    if (!isStorageAvailable(connection.getContentLength())) {
+                        skipDownload(DownloadError.INSUFFICIENT_STORAGE, "Insufficient storage space");
+                        return;
+                    }
+
+                    downloadFile();
+                }
+            } catch (Exception e) {
+                skipDownload(DownloadError.UNEXPECTED_ERROR, "Error during retry: " + e.getMessage());
+            }
+        }
+
+        private void skipDownload(DownloadError error, String message) {
+            Log.e(TAG, "Skipping download for " + url + ": " + message);
             if (downloadCallback != null) {
                 downloadCallback.onError(url, error, message);
             }
-            if (error != DownloadError.NETWORK_UNAVAILABLE) {
-                removeDownloadTask(url);
+            // Clean up resources
+            if (connection != null) {
+                connection.disconnect();
+                connection = null;
             }
-            pauseDownload();
+            removeDownloadTask(url);
         }
 
         private void pauseDownload() {
@@ -510,6 +634,17 @@ public class DownloadManager {
             isCancelled.set(true);
             if (connection != null) {
                 connection.disconnect();
+            }
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            try {
+                if (connection != null) {
+                    connection.disconnect();
+                }
+            } finally {
+                super.finalize();
             }
         }
     }

@@ -41,6 +41,7 @@ public class HikingTrailImageDownloader {
     private final DownloadManager downloadManager;
     private final CacheManager cacheManager;
     private boolean isDownloadPaused = false;
+    private final MapContentHandler mapContentHandler;
 
     public HikingTrailImageDownloader(Context context) {
         this.context = context;
@@ -48,6 +49,7 @@ public class HikingTrailImageDownloader {
         this.database = AppDatabase.getDatabase(context);
         this.downloadManager = DownloadManager.getInstance(context);
         this.cacheManager = new CacheManager(context);
+        this.mapContentHandler = new MapContentHandler(context);
 
         setupDownloadCallbacks();
     }
@@ -74,6 +76,7 @@ public class HikingTrailImageDownloader {
                         // Handle timeout
                         break;
                     case CONNECTION_LOST:
+                        pauseDownloads();
                         // Handle connection lost
                         break;
                     case INSUFFICIENT_STORAGE:
@@ -82,7 +85,7 @@ public class HikingTrailImageDownloader {
                     // Handle other errors...
                 }
 
-                pauseDownloads();
+                // pauseDownloads();
             }
 
             @Override
@@ -129,9 +132,12 @@ public class HikingTrailImageDownloader {
                 if (hasIncompleteDownloads) {
                     resumeIncompleteDownloads(downloadStates);
                 } else {
-                    // Check if database is empty
                     List<TrailEntity> existingTrails = database.trailDao().getAllTrailsList();
-                    if (existingTrails == null || existingTrails.isEmpty()) {
+                    boolean needsUpdate = existingTrails == null ||
+                            existingTrails.isEmpty() ||
+                            existingTrails.stream().anyMatch(trail -> !trail.isInited());
+
+                    if (needsUpdate) {
                         startFreshDownload();
                     }
                 }
@@ -260,6 +266,15 @@ public class HikingTrailImageDownloader {
 
                     database.trailImageDao().insert(trailImage);
                 }
+
+                Elements mapLinks = doc.select("a span.icon.map").parents();
+                for (Element mapLink : mapLinks) {
+                    String mapUrl = mapLink.attr("href");
+                    trail.setId(trailId);
+                    mapContentHandler.handleMapContent(trail, mapUrl);
+                }
+
+
             } catch (IOException e) {
                 Log.e(TAG, "Error downloading images for trail: " + trail.getTrailName(), e);
             }

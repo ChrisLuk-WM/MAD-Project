@@ -7,9 +7,11 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 import com.example.mad_project.database.dao.HikingSessionDao;
+import com.example.mad_project.database.dao.HikingStatisticsDao;
 import com.example.mad_project.database.dao.TrailDao;
 import com.example.mad_project.database.dao.TrailImageDao;
 import com.example.mad_project.database.entities.HikingSessionEntity;
+import com.example.mad_project.database.entities.HikingStatisticsEntity;
 import com.example.mad_project.database.entities.TrailEntity;
 import com.example.mad_project.database.entities.TrailImage;
 
@@ -17,7 +19,8 @@ import com.example.mad_project.database.entities.TrailImage;
         entities = {
                 TrailEntity.class,
                 HikingSessionEntity.class,
-                TrailImage.class
+                TrailImage.class,
+                HikingStatisticsEntity.class
         },
         version = 1,
         exportSchema = false
@@ -28,6 +31,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract TrailDao trailDao();
     public abstract HikingSessionDao hikingSessionDao();
     public abstract TrailImageDao trailImageDao();
+    public abstract HikingStatisticsDao hikingStatisticsDao();
 
     public static AppDatabase getDatabase(final Context context) {
         if (INSTANCE == null) {

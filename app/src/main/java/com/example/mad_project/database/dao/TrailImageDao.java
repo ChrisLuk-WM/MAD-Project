@@ -33,4 +33,7 @@ public interface TrailImageDao {
 
     @Query("DELETE FROM trail_images WHERE trailId = :trailId")
     void deleteAllImagesForTrail(long trailId);
+
+    @Query("SELECT * FROM trail_images WHERE imagePath = :url LIMIT 1")
+    TrailImage getImageByUrl(String url);
 }

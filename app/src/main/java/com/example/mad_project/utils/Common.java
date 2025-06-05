@@ -30,4 +30,27 @@ public class Common {
             return null;
         }
     }
+
+    public static String getExtenstionName(String fileUrl) {
+        // First try to get extension from the URL path
+        String extension = "";
+
+        // Method 1: Using last segment after dot
+        int lastDotIndex = fileUrl.lastIndexOf('.');
+        if (lastDotIndex > 0) {
+            extension = fileUrl.substring(lastDotIndex).toLowerCase();
+
+            // Remove any query parameters or fragments
+            int queryIndex = extension.indexOf('?');
+            if (queryIndex > 0) {
+                extension = extension.substring(0, queryIndex);
+            }
+            int fragmentIndex = extension.indexOf('#');
+            if (fragmentIndex > 0) {
+                extension = extension.substring(0, fragmentIndex);
+            }
+        }
+
+        return extension;
+    }
 }
