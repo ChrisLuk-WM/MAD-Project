@@ -4,6 +4,11 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
 
 import com.example.mad_project.content_downloader.HikingTrailImageDownloader;
 import com.example.mad_project.database.AppDatabase;
@@ -19,12 +24,25 @@ public class MainActivity extends BaseActivity {
     private AppDatabase database;
     private HikingTrailImageDownloader imageDownloader;
     private StatisticsCalculator statisticsCalculator;
+    private NavController navController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         DownloadManager.getInstance(this);
+
+        Toolbar toolbar = findViewById(R.id.toolbar_layout);
+        setSupportActionBar(toolbar);
+
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        if (navHostFragment != null) {
+            navController = navHostFragment.getNavController();
+            AppBarConfiguration appBarConfiguration = new AppBarConfiguration
+                    .Builder(navController.getGraph())
+                    .build();
+            NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
+        }
 
         // Initialize database and downloader
         database = AppDatabase.getDatabase(this);
@@ -36,6 +54,11 @@ public class MainActivity extends BaseActivity {
 
         // Observe data
         // observeTrailsData();
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        return navController.navigateUp() || super.onSupportNavigateUp();
     }
 
     @Override

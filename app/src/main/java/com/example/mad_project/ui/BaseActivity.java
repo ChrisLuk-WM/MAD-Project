@@ -18,7 +18,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         setContentView(getLayoutResourceId());
 
         // Setup common toolbar
-        toolbar = findViewById(R.id.toolbar);
+        toolbar = findViewById(R.id.toolbar_layout); // Changed from R.id.toolbar
         if (toolbar != null) {
             setSupportActionBar(toolbar);
             if (showBackButton()) {
@@ -27,10 +27,7 @@ public abstract class BaseActivity extends AppCompatActivity {
             }
         }
 
-        // Initialize views
         initViews();
-
-        // Setup actions
         setupActions();
     }
 

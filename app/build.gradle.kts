@@ -48,34 +48,36 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
 
     // AndroidX
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-livedata:2.6.1")
+    implementation(libs.androidx.appcompat.v161)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel)
+    implementation(libs.androidx.lifecycle.livedata)
 
     // Room Database
-    implementation("androidx.room:room-runtime:2.5.2")
-    implementation("androidx.room:room-ktx:2.5.2")
-    annotationProcessor("androidx.room:room-compiler:2.5.2")
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    annotationProcessor(libs.androidx.room.compiler)
 
     // Google Play Services
-    implementation("com.google.android.gms:play-services-maps:18.1.0")
-    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
 
     // Retrofit for API calls
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.logging.interceptor)
 
     // Dependency Injection
-    implementation("com.google.dagger:hilt-android:2.48")
-    annotationProcessor("com.google.dagger:hilt-android-compiler:2.48")
+    implementation(libs.hilt.android)
+    annotationProcessor(libs.hilt.android.compiler)
 
     // Sensor management
-    implementation("com.github.nisrulz:sensey:1.0.1")
+    implementation(libs.sensey)
 
     // Logging
-    implementation("com.jakewharton.timber:timber:5.0.1")
+    implementation(libs.timber)
 
     implementation(libs.jsoup)
+
+    implementation(libs.androidx.navigation.fragment)
 }
