@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="MenuCard">
+        <attr name="cardIcon" format="reference" />
+        <attr name="cardTitle" format="string" />
+        <attr name="cardSubtitle" format="string" />
+    </declare-styleable>
+</resources>
