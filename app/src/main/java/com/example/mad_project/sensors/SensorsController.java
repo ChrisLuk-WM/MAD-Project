@@ -12,6 +12,9 @@ import com.example.mad_project.services.TrackingNotificationService;
 import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.statistics.StatisticsType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Central controller for all sensor-related operations.
  * This class follows the Singleton pattern to ensure only one instance manages all sensors.
@@ -19,7 +22,7 @@ import com.example.mad_project.statistics.StatisticsType;
 public class SensorsController {
     private static SensorsController instance;
     private final Context context;
-    private final GPSHandler gpsHandler;
+    private final List<SensorHandler> sensorHandlers = new ArrayList<>();
     private final StatisticsManager statisticsManager;
 
     // LiveData for tracking status only
@@ -28,8 +31,15 @@ public class SensorsController {
     private SensorsController(Context context) {
         this.context = context.getApplicationContext();
         this.statisticsManager = StatisticsManager.getInstance();
-        this.gpsHandler = new GPSHandler(this.context);
-        initializeObservers();
+
+        initializeSensorHandlers();
+    }
+
+    private void initializeSensorHandlers() {
+        // Add all sensor handlers to the list
+        sensorHandlers.add(new GPSHandler(context));
+        sensorHandlers.add(new StepCounterHandler(context));
+        // Add more handlers here as needed
     }
 
     public static synchronized SensorsController getInstance(Context context) {
@@ -37,15 +47,6 @@ public class SensorsController {
             instance = new SensorsController(context);
         }
         return instance;
-    }
-
-    private void initializeObservers() {
-        // Observe GPS updates
-        gpsHandler.getCurrentLocation().observeForever(location -> {
-            if (location != null) {
-                statisticsManager.setValue(StatisticsType.LOCATION, location);
-            }
-        });
     }
 
     private void startNotificationService() {
@@ -65,31 +66,44 @@ public class SensorsController {
         context.startService(serviceIntent);
     }
 
-    // Tracking Control Methods
     public void startTracking() {
         if (statisticsManager.isSessionActive()) return;
 
         statisticsManager.startSession();
-        gpsHandler.startTracking();
+        for (SensorHandler handler : sensorHandlers) {
+            handler.startTracking();
+        }
         isTracking.setValue(true);
         startNotificationService();
     }
 
     public void stopTracking() {
-        gpsHandler.stopTracking();
+        for (SensorHandler handler : sensorHandlers) {
+            handler.stopTracking();
+        }
         statisticsManager.stopSession();
         isTracking.setValue(false);
         stopNotificationService();
     }
 
     public void pauseTracking() {
-        gpsHandler.pauseTracking();
+        for (SensorHandler handler : sensorHandlers) {
+            handler.pauseTracking();
+        }
         isTracking.setValue(false);
     }
 
     public void resumeTracking() {
-        gpsHandler.resumeTracking();
+        for (SensorHandler handler : sensorHandlers) {
+            handler.resumeTracking();
+        }
         isTracking.setValue(true);
+    }
+
+    public void resetAllSensors() {
+        for (SensorHandler handler : sensorHandlers) {
+            handler.reset();
+        }
     }
 
     // Getter Methods

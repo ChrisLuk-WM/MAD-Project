@@ -19,7 +19,7 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
 
-public class GPSHandler {
+public class GPSHandler implements SensorHandler {
     private static final long UPDATE_INTERVAL = 10000; // 10 seconds
     private static final long FASTEST_INTERVAL = 5000; // 5 seconds
 
@@ -130,5 +130,13 @@ public class GPSHandler {
 
     public boolean isTracking() {
         return isTracking;
+    }
+
+    @Override
+    public void reset() {
+        currentLocation.setValue(null);
+        statisticsManager.setValue(StatisticsType.LOCATION, null);
+        statisticsManager.setValue(StatisticsType.TOTAL_DISTANCE, 0.0);
+        statisticsManager.setValue(StatisticsType.TOTAL_ELEVATION_GAIN, 0.0);
     }
 }

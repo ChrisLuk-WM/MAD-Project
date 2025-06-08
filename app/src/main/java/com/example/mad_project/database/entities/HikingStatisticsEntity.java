@@ -4,6 +4,8 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
+import java.time.LocalDateTime;
+
 @Entity(tableName = "hiking_statistics",
         foreignKeys = @ForeignKey(entity = HikingSessionEntity.class,
                 parentColumns = "id",
@@ -14,7 +16,7 @@ public class HikingStatisticsEntity {
     private long id;
 
     private long sessionId;
-    private long timestamp;
+    private LocalDateTime dateTime;
     private double latitude;
     private double longitude;
     private double altitude;
@@ -30,8 +32,8 @@ public class HikingStatisticsEntity {
     public long getSessionId() { return sessionId; }
     public void setSessionId(long sessionId) { this.sessionId = sessionId; }
 
-    public long getTimestamp() { return timestamp; }
-    public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+    public LocalDateTime getDateTime() { return dateTime; }
+    public void setDateTime(LocalDateTime dateTime) { this.dateTime = dateTime; }
 
     public double getLatitude() { return latitude; }
     public void setLatitude(double latitude) { this.latitude = latitude; }

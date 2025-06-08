@@ -13,10 +13,10 @@ public interface HikingStatisticsDao {
     @Insert
     long insert(HikingStatisticsEntity statistics);
 
-    @Query("SELECT * FROM hiking_statistics WHERE sessionId = :sessionId ORDER BY timestamp ASC")
+    @Query("SELECT * FROM hiking_statistics WHERE sessionId = :sessionId ORDER BY dateTime ASC")
     List<HikingStatisticsEntity> getAllStatisticsForSession(long sessionId);
 
-    @Query("SELECT * FROM hiking_statistics WHERE sessionId = :sessionId AND timestamp > :fromTime ORDER BY timestamp ASC")
+    @Query("SELECT * FROM hiking_statistics WHERE sessionId = :sessionId AND dateTime > :fromTime ORDER BY dateTime ASC")
     List<HikingStatisticsEntity> getStatisticsAfterTime(long sessionId, long fromTime);
 
     @Query("DELETE FROM hiking_statistics WHERE sessionId = :sessionId")

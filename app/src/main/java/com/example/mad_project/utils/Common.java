@@ -53,4 +53,32 @@ public class Common {
 
         return extension;
     }
+
+
+    public static float convertToFloat(Object value) {
+        if (value == null) return 0.0f;
+        if (value instanceof Double) return ((Double) value).floatValue();
+        if (value instanceof Integer) return ((Integer) value).floatValue();
+        if (value instanceof Long) return ((Long) value).floatValue();
+        if (value instanceof Float) return (float) value;
+        return 0.0f;
+    }
+
+    public static double convertToDouble(Object value) {
+        if (value == null) return 0.0;
+        if (value instanceof Double) return (Double) value;
+        if (value instanceof Integer) return ((Integer) value).doubleValue();
+        if (value instanceof Long) return ((Long) value).doubleValue();
+        if (value instanceof Float) return ((Float) value).doubleValue();
+        return 0.0;
+    }
+
+    public static int convertToInt(Object value) {
+        if (value == null) return 0;
+        if (value instanceof Integer) return (Integer) value;
+        if (value instanceof Double) return ((Double) value).intValue();
+        if (value instanceof Long) return ((Long) value).intValue();
+        if (value instanceof Float) return ((Float) value).intValue();
+        return 0;
+    }
 }

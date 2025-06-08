@@ -21,6 +21,7 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.mad_project.content_downloader.HikingTrailImageDownloader;
 import com.example.mad_project.database.AppDatabase;
 import com.example.mad_project.sensors.SensorsController;
+import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.ui.BaseActivity;
 import com.example.mad_project.utils.DownloadManager;
 import com.example.mad_project.statistics.StatisticsCalculator;
@@ -33,13 +34,27 @@ public class MainActivity extends BaseActivity {
     private StatisticsCalculator statisticsCalculator;
     private NavController navController;
     private SensorsController sensorsController;
+    private StatisticsManager statisticsManager;
+
+
+    // Core component initialization and signal handling
+    private void initCoreComponents() {
+        // Initialize database and downloader
+        database = AppDatabase.getDatabase(this);
+        imageDownloader = new HikingTrailImageDownloader(this);
+
+        DownloadManager.getInstance(this);
+        statisticsCalculator = StatisticsCalculator.getInstance(this);
+        statisticsManager = StatisticsManager.getInstance();
+        sensorsController = SensorsController.getInstance(this);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         onCheckRequestPermissions();
 
-        DownloadManager.getInstance(this);
+        initCoreComponents();
 
         Toolbar toolbar = findViewById(R.id.toolbar_layout);
         setSupportActionBar(toolbar);
@@ -54,32 +69,19 @@ public class MainActivity extends BaseActivity {
             NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         }
 
-        // Initialize database and downloader
-        database = AppDatabase.getDatabase(this);
-        imageDownloader = new HikingTrailImageDownloader(this);
-
         // Load data
         imageDownloader.loadTrailsData();
 
-        sensorsController = SensorsController.getInstance(this);
-        setupSensors();
-
-        initCoreComponents();
+        startTracking();
 
         // Observe data
         // observeTrailsData();
     }
 
-    private void setupSensors() {
-//        sensorsController.getTrackingStatistics().observe(this, stats -> {
-//            // updateUI(stats);
-//        });
-//
-//        // Observe tracking status
-//        sensorsController.getTrackingStatus().observe(this, isTracking -> {
-//            // updateTrackingUI(isTracking);
-//        });
+    private void startTracking() {
+        if (statisticsManager.isSessionActive()) return;
         sensorsController.startTracking();
+        statisticsCalculator.startSession();
     }
 
     private void onCheckRequestPermissions() {
@@ -122,12 +124,6 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void setupActions() {
         // Setup core component interactions
-    }
-
-    // Core component initialization and signal handling
-    private void initCoreComponents() {
-        statisticsCalculator = StatisticsCalculator.getInstance(this);
-        // Initialize other core components
     }
 
     private void setupSignalTransmission() {

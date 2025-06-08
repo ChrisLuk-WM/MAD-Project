@@ -26,4 +26,7 @@ public interface HikingSessionDao {
 
     @Query("SELECT * FROM hiking_sessions WHERE id = :sessionId")
     LiveData<HikingSessionEntity> getSessionById(long sessionId);
+
+    @Query("SELECT * FROM hiking_sessions WHERE endTime is null ORDER BY startTime DESC LIMIT 1")
+    HikingSessionEntity getActiveSession();
 }

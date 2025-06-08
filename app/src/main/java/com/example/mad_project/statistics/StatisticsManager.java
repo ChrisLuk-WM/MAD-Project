@@ -12,20 +12,13 @@ public class StatisticsManager {
 
     private StatisticsManager() {
         statistics = new EnumMap<>(StatisticsType.class);
-        initializeStatistics();
+        initializeDefaultValues();
     }
 
-    private void initializeStatistics() {
-        statistics.put(StatisticsType.LOCATION, new StatisticsValue<>(null));
-        statistics.put(StatisticsType.STEPS, new StatisticsValue<>(0));
-        statistics.put(StatisticsType.SPEED, new StatisticsValue<>(0.0));
-        statistics.put(StatisticsType.ALTITUDE, new StatisticsValue<>(0.0));
-        statistics.put(StatisticsType.BEARING, new StatisticsValue<>(0f));
-        statistics.put(StatisticsType.ACCURACY, new StatisticsValue<>(0.0));
-        statistics.put(StatisticsType.TOTAL_DISTANCE, new StatisticsValue<>(0.0));
-        statistics.put(StatisticsType.TOTAL_ELEVATION_GAIN, new StatisticsValue<>(0.0));
-        statistics.put(StatisticsType.SESSION_START_TIME, new StatisticsValue<>(0L));
-        statistics.put(StatisticsType.SESSION_ACTIVE, new StatisticsValue<>(false));
+    private void initializeDefaultValues() {
+        for (StatisticsType type : StatisticsType.values()) {
+            statistics.put(type, type.getDefaultValue());
+        }
     }
 
     public static StatisticsManager getInstance() {
@@ -38,17 +31,34 @@ public class StatisticsManager {
         }
         return instance;
     }
-
     @SuppressWarnings("unchecked")
     public <T> T getValue(StatisticsType type) {
         StatisticsValue<T> value = (StatisticsValue<T>) statistics.get(type);
-        return value != null ? value.get() : null;
+        if (value == null) {
+            value = (StatisticsValue<T>) type.getDefaultValue();
+            statistics.put(type, value);
+        }
+        return value.get();
     }
 
     @SuppressWarnings("unchecked")
     public <T> void setValue(StatisticsType type, T value) {
         StatisticsValue<T> statisticsValue = (StatisticsValue<T>) statistics.get(type);
-        if (statisticsValue != null) {
+        if (statisticsValue == null) {
+            statisticsValue = (StatisticsValue<T>) type.getDefaultValue();
+            statistics.put(type, statisticsValue);
+        }
+
+        if (value instanceof Number && type.getType() != value.getClass()) {
+            Number number = (Number) value;
+            if (type.getType() == Double.class) {
+                ((StatisticsValue<Double>) statisticsValue).set(number.doubleValue());
+            } else if (type.getType() == Integer.class) {
+                ((StatisticsValue<Integer>) statisticsValue).set(number.intValue());
+            } else if (type.getType() == Long.class) {
+                ((StatisticsValue<Long>) statisticsValue).set(number.longValue());
+            }
+        } else {
             statisticsValue.set(value);
         }
     }
@@ -79,9 +89,9 @@ public class StatisticsManager {
         setValue(StatisticsType.STEPS, 0);
     }
 
-    public void reset() {
-        for (Map.Entry<StatisticsType, StatisticsValue<?>> entry : statistics.entrySet()) {
-            entry.getValue().reset();
+    public void clearStatistics() {
+        for (StatisticsValue<?> value : statistics.values()) {
+            value.reset();
         }
     }
 }

@@ -1,5 +1,9 @@
 package com.example.mad_project.statistics;
 
+import static com.example.mad_project.utils.Common.convertToDouble;
+import static com.example.mad_project.utils.Common.convertToFloat;
+import static com.example.mad_project.utils.Common.convertToInt;
+
 import android.content.Context;
 import android.location.Location;
 
@@ -9,9 +13,10 @@ import com.example.mad_project.database.dao.HikingStatisticsDao;
 import com.example.mad_project.database.entities.HikingSessionEntity;
 import com.example.mad_project.database.entities.HikingStatisticsEntity;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
+import java.lang.ref.WeakReference;
+import java.time.LocalDateTime;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StatisticsCalculator extends Thread {
@@ -20,8 +25,12 @@ public class StatisticsCalculator extends Thread {
     private final AtomicBoolean isRunning;
     private final HikingSessionDao sessionDao;
     private final HikingStatisticsDao statisticsDao;
-    private HikingSessionEntity currentSession;
-    private Location previousLocation;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private WeakReference<Location> previousLocation; // Use WeakReference
+    private WeakReference<HikingSessionEntity> currentSession; // Use WeakReference
+    private static final int STATISTICS_INTERVAL = 5000; // 5 seconds
+    private final float[] distanceResults = new float[1]; // Reuse array
 
     private StatisticsCalculator(Context context) {
         super("StatisticsCalculator-Thread");
@@ -43,18 +52,63 @@ public class StatisticsCalculator extends Thread {
         return instance;
     }
 
-    public void startSession(HikingSessionEntity session) {
-        currentSession = session;
-        isRunning.set(true);
-        if (!isAlive()) {
-            start();
+    public void startSession() {
+        executor.execute(() -> {
+            try {
+                HikingSessionEntity session = findActiveSession();
+                if (session == null) {
+                    session = createNewSession();
+                }
+                currentSession = new WeakReference<>(session);
+                isRunning.set(true);
+                if (!isAlive()) {
+                    start();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private HikingSessionEntity findActiveSession() {
+        // Find session with no end time
+        return sessionDao.getActiveSession();
+    }
+
+    private HikingSessionEntity createNewSession() {
+        HikingSessionEntity session = new HikingSessionEntity();
+        session.setStartTime(LocalDateTime.now());
+        session.setTrailId(1); // 1 is the free hiking
+        session.setDistance(0);
+        session.setSteps(0);
+        session.setAverageSpeed(0);
+        session.setTotalElevationGain(0);
+
+        try {
+            long sessionId = sessionDao.insert(session);
+            session.setId(sessionId);
+            return session;
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Handle failure
+            return null;
         }
     }
 
     public void stopSession() {
-        isRunning.set(false);
-        // Final update
-        saveStatistics();
+        executor.execute(() -> {
+            try {
+                HikingSessionEntity session = currentSession != null ? currentSession.get() : null;
+                if (session != null) {
+                    session.setEndTime(LocalDateTime.now());
+                    sessionDao.update(session);
+                }
+                isRunning.set(false);
+                saveStatistics();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @Override
@@ -62,79 +116,114 @@ public class StatisticsCalculator extends Thread {
         while (isRunning.get()) {
             try {
                 saveStatistics();
-                Thread.sleep(5000); // 5 seconds interval
+                Thread.sleep(STATISTICS_INTERVAL); // 5 seconds interval
             } catch (InterruptedException e) {
                 if (!isRunning.get()) break;
             } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
 
     private void saveStatistics() {
-        if (currentSession == null) return;
+        HikingSessionEntity session = currentSession != null ? currentSession.get() : null;
+        if (session == null){
+            startSession();
+            if (session == null) return;
+        }
 
         Location location = statisticsManager.getValue(StatisticsType.LOCATION);
         if (location != null) {
-            HikingStatisticsEntity statistics = new HikingStatisticsEntity();
-            statistics.setSessionId(currentSession.getId());
-            statistics.setTimestamp(System.currentTimeMillis());
-            statistics.setLatitude(location.getLatitude());
-            statistics.setLongitude(location.getLongitude());
-            statistics.setAltitude(statisticsManager.getValue(StatisticsType.ALTITUDE));
-            statistics.setSpeed(statisticsManager.getValue(StatisticsType.SPEED));
-            statistics.setAccuracy(statisticsManager.getValue(StatisticsType.ACCURACY));
-            statistics.setSteps(statisticsManager.getValue(StatisticsType.STEPS));
-            statistics.setBearing(statisticsManager.getValue(StatisticsType.BEARING));
-
-            statisticsDao.insert(statistics);
-            updateAccumulatedValues(location);
-            updateSession();
+            HikingStatisticsEntity statistics = createStatistics(session, location);
+            try {
+                statisticsDao.insert(statistics);
+                updateAccumulatedValues(location);
+                updateSession(session);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
+    private HikingStatisticsEntity createStatistics(HikingSessionEntity session, Location location) {
+        HikingStatisticsEntity statistics = new HikingStatisticsEntity();
+        statistics.setSessionId(session.getId());
+        statistics.setDateTime(LocalDateTime.now());
+        statistics.setLatitude(location.getLatitude());
+        statistics.setLongitude(location.getLongitude());
+
+        try {
+            // Handle each type separately with proper conversion
+            Object altitudeObj = statisticsManager.getValue(StatisticsType.ALTITUDE);
+            statistics.setAltitude(convertToDouble(altitudeObj));
+
+            Object speedObj = statisticsManager.getValue(StatisticsType.SPEED);
+            statistics.setSpeed(convertToDouble(speedObj));
+
+            Object accuracyObj = statisticsManager.getValue(StatisticsType.ACCURACY);
+            statistics.setAccuracy(convertToDouble(accuracyObj));
+
+            Object stepsObj = statisticsManager.getValue(StatisticsType.STEPS);
+            statistics.setSteps(convertToInt(stepsObj));
+
+            Object bearingObj = statisticsManager.getValue(StatisticsType.BEARING);
+            statistics.setBearing(convertToFloat(bearingObj));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return statistics;
+    }
 
     private void updateAccumulatedValues(Location location) {
-        if (previousLocation != null) {
-            float[] results = new float[1];
+        Location prev = previousLocation != null ? previousLocation.get() : null;
+        if (prev != null) {
             Location.distanceBetween(
-                    previousLocation.getLatitude(), previousLocation.getLongitude(),
+                    prev.getLatitude(), prev.getLongitude(),
                     location.getLatitude(), location.getLongitude(),
-                    results
+                    distanceResults
             );
 
-            Double currentDistance = statisticsManager.getValue(StatisticsType.TOTAL_DISTANCE);
-            statisticsManager.setValue(StatisticsType.TOTAL_DISTANCE, currentDistance + results[0]);
+            Object currentDistanceObj = statisticsManager.getValue(StatisticsType.TOTAL_DISTANCE);
+            double currentDistance = convertToDouble(currentDistanceObj);
+            statisticsManager.setValue(StatisticsType.TOTAL_DISTANCE, currentDistance + distanceResults[0]);
 
-            double elevDiff = location.getAltitude() - previousLocation.getAltitude();
+            double elevDiff = location.getAltitude() - prev.getAltitude();
             if (elevDiff > 0) {
-                Double currentGain = statisticsManager.getValue(StatisticsType.TOTAL_ELEVATION_GAIN);
+                Object currentGainObj = statisticsManager.getValue(StatisticsType.TOTAL_ELEVATION_GAIN);
+                double currentGain = convertToDouble(currentGainObj);
                 statisticsManager.setValue(StatisticsType.TOTAL_ELEVATION_GAIN, currentGain + elevDiff);
             }
         }
-        previousLocation = location;
+        previousLocation = new WeakReference<>(location);
     }
 
-    private void updateSession() {
-        currentSession.setDistance(statisticsManager.getValue(StatisticsType.TOTAL_DISTANCE));
-        currentSession.setSteps(statisticsManager.getValue(StatisticsType.STEPS));
-        currentSession.setAverageSpeed(statisticsManager.getValue(StatisticsType.SPEED));
-        currentSession.setTotalElevationGain((int) statisticsManager.getValue(StatisticsType.TOTAL_ELEVATION_GAIN));
+    private void updateSession(HikingSessionEntity session) {
+        executor.execute(() -> {
+            try {
+                Object distanceObj = statisticsManager.getValue(StatisticsType.TOTAL_DISTANCE);
+                session.setDistance(convertToDouble(distanceObj));
 
-        // Update tracked path
-        try {
-            JSONArray pathArray = new JSONArray(currentSession.getTrackedPath());
-            JSONObject point = new JSONObject();
-            Location location = statisticsManager.getValue(StatisticsType.LOCATION);
-            point.put("lat", location.getLatitude());
-            point.put("lng", location.getLongitude());
-            point.put("alt", statisticsManager.getValue(StatisticsType.ALTITUDE));
-            point.put("time", System.currentTimeMillis());
-            pathArray.put(point);
-            currentSession.setTrackedPath(pathArray.toString());
-        } catch (Exception e) {
+                Object stepsObj = statisticsManager.getValue(StatisticsType.STEPS);
+                session.setSteps(convertToInt(stepsObj));
 
-        }
+                Object speedObj = statisticsManager.getValue(StatisticsType.SPEED);
+                session.setAverageSpeed(convertToDouble(speedObj));
 
-        sessionDao.update(currentSession);
+                Object elevationGainObj = statisticsManager.getValue(StatisticsType.TOTAL_ELEVATION_GAIN);
+                session.setTotalElevationGain((int) convertToDouble(elevationGainObj));
+
+                sessionDao.update(session);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        executor.shutdown();
+        super.finalize();
     }
 }

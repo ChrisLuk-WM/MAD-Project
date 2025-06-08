@@ -4,6 +4,8 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
+import java.time.LocalDateTime;
+
 @Entity(tableName = "hiking_sessions",
         foreignKeys = @ForeignKey(entity = TrailEntity.class,
                 parentColumns = "id",
@@ -14,11 +16,10 @@ public class HikingSessionEntity {
     private long id;
 
     private long trailId;
-    private long startTime;
-    private long endTime;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
     private int steps;
     private double distance;
-    private String trackedPath; // JSON string of tracked coordinates
     private double averageSpeed;
     private int totalElevationGain;
 
@@ -29,20 +30,17 @@ public class HikingSessionEntity {
     public long getTrailId() { return trailId; }
     public void setTrailId(long trailId) { this.trailId = trailId; }
 
-    public long getStartTime() { return startTime; }
-    public void setStartTime(long startTime) { this.startTime = startTime; }
+    public LocalDateTime  getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
 
-    public long getEndTime() { return endTime; }
-    public void setEndTime(long endTime) { this.endTime = endTime; }
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
     public int getSteps() { return steps; }
     public void setSteps(int steps) { this.steps = steps; }
 
     public double getDistance() { return distance; }
     public void setDistance(double distance) { this.distance = distance; }
-
-    public String getTrackedPath() { return trackedPath; }
-    public void setTrackedPath(String trackedPath) { this.trackedPath = trackedPath; }
 
     public double getAverageSpeed() { return averageSpeed; }
     public void setAverageSpeed(double averageSpeed) { this.averageSpeed = averageSpeed; }
