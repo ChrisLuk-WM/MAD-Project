@@ -1,5 +1,6 @@
 package com.example.mad_project.services;
 
+import android.Manifest;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -10,6 +11,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -47,6 +50,8 @@ public class TrackingService extends Service {
     private NotificationManager notificationManager;
     private final StatisticsManager statisticsManager = StatisticsManager.getInstance();
     private boolean isRunning = false;
+    private final Object serviceLock = new Object();
+    private volatile boolean isDestroying = false;
 
     private final BroadcastReceiver keepAliveReceiver = new BroadcastReceiver() {
         @Override
@@ -66,9 +71,41 @@ public class TrackingService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        initializeService();
-        registerKeepAliveReceiver();
-        scheduleKeepAlive();
+        synchronized (serviceLock) {
+            try {
+                if (checkPermissions()) {
+                    initializeService();
+                    registerKeepAliveReceiver();
+                    scheduleKeepAlive();
+
+                    // Create and start foreground notification
+                    Notification notification = buildNotification();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        try {
+                            startForeground(NOTIFICATION_ID, notification,
+                                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION |
+                                            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+                        } catch (Exception e) {
+                            // Fallback to regular foreground start
+                            startForeground(NOTIFICATION_ID, notification);
+                        }
+                    } else {
+                        startForeground(NOTIFICATION_ID, notification);
+                    }
+                } else {
+                    stopSelf();
+                }
+            } catch (Exception e) {
+                stopSelf();
+            }
+        }
+    }
+    private boolean checkPermissions() {
+        return checkSelfPermission(Manifest.permission.FOREGROUND_SERVICE) == PackageManager.PERMISSION_GRANTED
+                && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                && checkSelfPermission(Manifest.permission.WAKE_LOCK) == PackageManager.PERMISSION_GRANTED
+                && (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+                checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED);
     }
 
     private void initializeService() {
@@ -89,16 +126,21 @@ public class TrackingService extends Service {
     }
 
     private void registerKeepAliveReceiver() {
-        IntentFilter filter = new IntentFilter(ServiceConstants.ACTION_KEEP_ALIVE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(keepAliveReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(keepAliveReceiver, filter);
+        try {
+            IntentFilter filter = new IntentFilter(ServiceConstants.ACTION_KEEP_ALIVE);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(keepAliveReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                registerReceiver(keepAliveReceiver, filter, Context.RECEIVER_EXPORTED);
+            }
+        } catch (Exception e) {
         }
     }
 
     private void scheduleKeepAlive() {
         Intent intent = new Intent(ServiceConstants.ACTION_KEEP_ALIVE);
+        intent.setPackage(getPackageName());
+
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 this,
                 0,
@@ -106,17 +148,34 @@ public class TrackingService extends Service {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
-        alarmManager.setRepeating(
-                AlarmManager.RTC_WAKEUP,
-                System.currentTimeMillis() + KEEP_ALIVE_INTERVAL,
-                KEEP_ALIVE_INTERVAL,
-                pendingIntent
-        );
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+            // Use setAlarmClock for Android 15 as it's more reliable
+            alarmManager.setAlarmClock(
+                    new AlarmManager.AlarmClockInfo(
+                            System.currentTimeMillis() + KEEP_ALIVE_INTERVAL,
+                            pendingIntent
+                    ),
+                    pendingIntent
+            );
+        } else {
+            alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    System.currentTimeMillis() + KEEP_ALIVE_INTERVAL,
+                    pendingIntent
+            );
+        }
     }
 
     private void ensureServiceRunning() {
-        if (isRunning && !wakeLock.isHeld()) {
-            startTracking();
+        if (isRunning) {
+            try {
+                if (!wakeLock.isHeld()) {
+                    acquireWakeLock();
+                }
+                startForeground(NOTIFICATION_ID, buildNotification());
+            } catch (Exception e) {
+
+            }
         }
     }
 
@@ -162,29 +221,63 @@ public class TrackingService extends Service {
     }
 
     private void acquireWakeLock() {
-        if (!wakeLock.isHeld()) {
-            wakeLock.acquire(24*60*60*1000L /*24 hours*/);
+        try {
+            if (!wakeLock.isHeld()) {
+                // Use shorter duration and renew via alarms
+                wakeLock.acquire(15 * 60 * 1000L); // 15 minutes
+
+                // Schedule wake lock renewal
+                Intent renewIntent = new Intent(this, TrackingService.class);
+                renewIntent.setAction(ServiceConstants.ACTION_RENEW_WAKE_LOCK);
+                PendingIntent renewPending = PendingIntent.getService(this, 2, renewIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+                alarmManager.setAlarmClock(
+                        new AlarmManager.AlarmClockInfo(
+                                System.currentTimeMillis() + (14 * 60 * 1000L), // 14 minutes
+                                renewPending
+                        ),
+                        renewPending
+                );
+            }
+        } catch (Exception e) {
+
         }
     }
 
     private void releaseWakeLock() {
-        if (wakeLock.isHeld()) {
-            wakeLock.release();
+        try {
+            if (wakeLock != null && wakeLock.isHeld()) {
+                wakeLock.release();
+            }
+        } catch (Exception e) {
         }
     }
 
     private void scheduleUpdates() {
+        if (isDestroying) return;
+
         backgroundHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (!isRunning) return;
+                if (!isRunning || isDestroying) return;
 
-                mainHandler.post(() -> {
-                    updateNotification();
-                    ensureServiceRunning();
-                });
+                synchronized (serviceLock) {
+                    try {
+                        mainHandler.post(() -> {
+                            if (!isDestroying) {
+                                updateNotification();
+                                ensureServiceRunning();
+                            }
+                        });
 
-                backgroundHandler.postDelayed(this, UPDATE_INTERVAL);
+                        if (!isDestroying) {
+                            backgroundHandler.postDelayed(this, UPDATE_INTERVAL);
+                        }
+                    } catch (Exception e) {
+
+                    }
+                }
             }
         }, UPDATE_INTERVAL);
     }
@@ -273,24 +366,37 @@ public class TrackingService extends Service {
 
     @Override
     public void onDestroy() {
-        try {
-            unregisterReceiver(keepAliveReceiver);
-        } catch (Exception e) {
-            Log.e("TrackingService", "Error unregistering receiver", e);
-        }
+        synchronized (serviceLock) {
+            isDestroying = true;
 
-        if (isRunning) {
-            // Try to restart service if it was running
-            Intent restartIntent = new Intent(this, TrackingService.class);
-            restartIntent.setAction(ServiceConstants.ACTION_START_TRACKING);
-            startService(restartIntent);
-        }
+            // Cancel any pending operations
+            if (backgroundHandler != null) {
+                backgroundHandler.removeCallbacksAndMessages(null);
+            }
+            if (mainHandler != null) {
+                mainHandler.removeCallbacksAndMessages(null);
+            }
 
-        releaseWakeLock();
-        if (backgroundThread != null) {
-            backgroundThread.quit();
+            // Clean up wake lock
+            releaseWakeLock();
+
+            // Clean up broadcast receiver
+            try {
+                unregisterReceiver(keepAliveReceiver);
+            } catch (Exception e) {
+            }
+
+            // Clean up background thread
+            if (backgroundThread != null) {
+                backgroundThread.quitSafely();
+                try {
+                    backgroundThread.join(1000);
+                } catch (InterruptedException e) {
+                }
+            }
+
+            super.onDestroy();
         }
-        super.onDestroy();
     }
 
     @Override
@@ -312,25 +418,6 @@ public class TrackingService extends Service {
                     System.currentTimeMillis() + 1000,
                     pendingIntent
             );
-        }
-    }
-
-    public static class KeepAliveReceiver extends BroadcastReceiver {
-        private final WeakReference<TrackingService> serviceReference;
-
-        public KeepAliveReceiver(){
-            serviceReference = null;
-        }
-        public KeepAliveReceiver(TrackingService service) {
-            this.serviceReference = new WeakReference<>(service);
-        }
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            TrackingService service = serviceReference.get();
-            if (service != null && ServiceConstants.ACTION_KEEP_ALIVE.equals(intent.getAction())) {
-                service.ensureServiceRunning();
-            }
         }
     }
 

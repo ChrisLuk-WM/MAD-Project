@@ -1,6 +1,7 @@
 package com.example.mad_project;
 
 import static com.example.mad_project.constants.Common.REQUEST_PERMISSION;
+import static com.example.mad_project.constants.Common.REQUEST_BACKGROUND_PERMISSION;
 
 import android.content.Context;
 import android.content.Intent;
@@ -82,12 +83,30 @@ public class MainActivity extends BaseActivity {
         statisticsCalculator.startSession();
     }
 
+
     private void onCheckRequestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            ActivityCompat.requestPermissions(this,
-                    RequiredPermissions.getRequiredPermissions(),
-                    REQUEST_PERMISSION);
+
+        ActivityCompat.requestPermissions(this,
+                RequiredPermissions.getRequiredPermissions(),
+                REQUEST_PERMISSION);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ActivityCompat.checkSelfPermission(this,
+                    Manifest.permission.ACCESS_BACKGROUND_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Background Location Access")
+                        .setMessage("This app needs to access location in the background to track your hikes.")
+                        .setPositiveButton("Grant", (dialog, which) -> {
+                            ActivityCompat.requestPermissions(this,
+                                    new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},
+                                    REQUEST_BACKGROUND_PERMISSION);
+                        })
+                        .setNegativeButton("Deny", null)
+                        .show();
+            }
         }
+
         requestBatteryOptimizationPermission();
     }
 
