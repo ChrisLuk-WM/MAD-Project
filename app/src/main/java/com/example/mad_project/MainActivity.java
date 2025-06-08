@@ -2,9 +2,14 @@ package com.example.mad_project;
 
 import static com.example.mad_project.constants.Common.REQUEST_PERMISSION;
 
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.Manifest;
+import android.os.PowerManager;
+import android.provider.Settings;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -82,6 +87,20 @@ public class MainActivity extends BaseActivity {
             ActivityCompat.requestPermissions(this,
                     RequiredPermissions.PERMISSIONS_LIST,
                     REQUEST_PERMISSION);
+        }
+        requestBatteryOptimizationPermission();
+    }
+
+    private void requestBatteryOptimizationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Intent intent = new Intent();
+            String packageName = getPackageName();
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (!pm.isIgnoringBatteryOptimizations(packageName)) {
+                intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                intent.setData(Uri.parse("package:" + packageName));
+                startActivity(intent);
+            }
         }
     }
 
