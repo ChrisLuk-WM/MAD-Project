@@ -1,5 +1,7 @@
 package com.example.mad_project.sensors;
 
+import static com.example.mad_project.utils.Common.convertToInt;
+
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -20,7 +22,6 @@ public class StepCounterHandler implements SensorHandler, SensorEventListener {
     private final SensorManager sensorManager;
     private final Sensor stepCounterSensor;
     private final StatisticsManager statisticsManager;
-    private final MutableLiveData<Integer> currentSteps = new MutableLiveData<>();
 
     private int initialSteps = -1;
     private boolean isTracking = false;
@@ -98,7 +99,6 @@ public class StepCounterHandler implements SensorHandler, SensorEventListener {
     @Override
     public void reset() {
         initialSteps = -1;
-        currentSteps.setValue(0);
         statisticsManager.setValue(StatisticsType.STEPS, 0);
         Log.d(TAG, "Step counter reset");
     }
@@ -110,15 +110,16 @@ public class StepCounterHandler implements SensorHandler, SensorEventListener {
 
             if (initialSteps == -1) {
                 initialSteps = totalSteps;
-                currentSteps.setValue(0);
                 statisticsManager.setValue(StatisticsType.STEPS, 0);
                 Log.d(TAG, "Initial steps set to: " + initialSteps);
                 return;
             }
 
             int steps = totalSteps - initialSteps;
-            currentSteps.setValue(steps);
-            statisticsManager.setValue(StatisticsType.STEPS, steps);
+            initialSteps = totalSteps;
+
+            statisticsManager.setValue(StatisticsType.STEPS,
+                    convertToInt(statisticsManager.getValue(StatisticsType.STEPS)) + steps);
             Log.d(TAG, "Steps updated: " + steps);
         }
     }
@@ -130,7 +131,4 @@ public class StepCounterHandler implements SensorHandler, SensorEventListener {
         }
     }
 
-    public LiveData<Integer> getCurrentSteps() {
-        return currentSteps;
-    }
 }

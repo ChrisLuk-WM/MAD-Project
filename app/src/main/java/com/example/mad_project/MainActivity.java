@@ -4,6 +4,7 @@ import static com.example.mad_project.constants.Common.REQUEST_PERMISSION;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.Manifest;
 import android.os.PowerManager;
 import android.provider.Settings;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.navigation.NavController;
@@ -47,14 +49,18 @@ public class MainActivity extends BaseActivity {
         statisticsCalculator = StatisticsCalculator.getInstance(this);
         statisticsManager = StatisticsManager.getInstance();
         sensorsController = SensorsController.getInstance(this);
+
+        // Load data
+        imageDownloader.loadTrailsData();
+
+        startTracking();
+
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         onCheckRequestPermissions();
-
-        initCoreComponents();
 
         Toolbar toolbar = findViewById(R.id.toolbar_layout);
         setSupportActionBar(toolbar);
@@ -68,14 +74,6 @@ public class MainActivity extends BaseActivity {
                     .build();
             NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         }
-
-        // Load data
-        imageDownloader.loadTrailsData();
-
-        startTracking();
-
-        // Observe data
-        // observeTrailsData();
     }
 
     private void startTracking() {
@@ -87,10 +85,50 @@ public class MainActivity extends BaseActivity {
     private void onCheckRequestPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             ActivityCompat.requestPermissions(this,
-                    RequiredPermissions.PERMISSIONS_LIST,
+                    RequiredPermissions.getRequiredPermissions(),
                     REQUEST_PERMISSION);
         }
         requestBatteryOptimizationPermission();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PERMISSION) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+
+            if (!allGranted) {
+                // Handle permission denial
+                showPermissionDeniedDialog();
+            } else {
+                // All permissions granted, proceed with initialization
+                initCoreComponents();
+            }
+        }
+    }
+
+    private void showPermissionDeniedDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Permissions Required")
+                .setMessage("This app requires certain permissions to function properly. " +
+                        "Please grant all requested permissions.")
+                .setPositiveButton("Open Settings", (dialog, which) -> {
+                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                    Uri uri = Uri.fromParts("package", getPackageName(), null);
+                    intent.setData(uri);
+                    startActivity(intent);
+                })
+                .setNegativeButton("Exit", (dialog, which) -> finish())
+                .setCancelable(false)
+                .show();
     }
 
     private void requestBatteryOptimizationPermission() {
@@ -128,6 +166,15 @@ public class MainActivity extends BaseActivity {
 
     private void setupSignalTransmission() {
         // Setup communication between core components
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (statisticsManager != null && statisticsManager.isSessionActive()) {
+            // Ensure services are running
+            sensorsController.startTracking();
+        }
     }
 
     @Override

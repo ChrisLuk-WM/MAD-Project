@@ -29,6 +29,6 @@ public interface TrailDao {
     LiveData<TrailEntity> getTrailById(long trailId);
 
 
-    @Query("SELECT * FROM trails")
+    @Query("SELECT * FROM trails WHERE id != 1")
     List<TrailEntity> getAllTrailsList();
 }

@@ -8,7 +8,8 @@ import android.os.Build;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.mad_project.services.TrackingNotificationService;
+import com.example.mad_project.constants.ServiceConstants;
+import com.example.mad_project.services.TrackingService;
 import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.statistics.StatisticsType;
 
@@ -48,11 +49,9 @@ public class SensorsController {
         }
         return instance;
     }
-
-    private void startNotificationService() {
-        Intent serviceIntent = new Intent(context, TrackingNotificationService.class);
-        serviceIntent.setAction("START_TRACKING");
-
+    private void startServices() {
+        Intent serviceIntent = new Intent(context, TrackingService.class);
+        serviceIntent.setAction(ServiceConstants.ACTION_START_TRACKING);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(serviceIntent);
         } else {
@@ -60,21 +59,21 @@ public class SensorsController {
         }
     }
 
-    private void stopNotificationService() {
-        Intent serviceIntent = new Intent(context, TrackingNotificationService.class);
-        serviceIntent.setAction("STOP_TRACKING");
+    private void stopServices() {
+        Intent serviceIntent = new Intent(context, TrackingService.class);
+        serviceIntent.setAction(ServiceConstants.ACTION_STOP_TRACKING);
         context.startService(serviceIntent);
     }
 
     public void startTracking() {
         if (statisticsManager.isSessionActive()) return;
 
+        startServices();
         statisticsManager.startSession();
         for (SensorHandler handler : sensorHandlers) {
             handler.startTracking();
         }
         isTracking.setValue(true);
-        startNotificationService();
     }
 
     public void stopTracking() {
@@ -83,7 +82,6 @@ public class SensorsController {
         }
         statisticsManager.stopSession();
         isTracking.setValue(false);
-        stopNotificationService();
     }
 
     public void pauseTracking() {

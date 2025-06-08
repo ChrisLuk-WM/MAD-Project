@@ -215,6 +215,9 @@ public class StatisticsCalculator extends Thread {
                 session.setTotalElevationGain((int) convertToDouble(elevationGainObj));
 
                 sessionDao.update(session);
+
+                // clear step count after updated
+                statisticsManager.setValue(StatisticsType.STEPS, 0);
             } catch (Exception e) {
                 e.printStackTrace();
             }
