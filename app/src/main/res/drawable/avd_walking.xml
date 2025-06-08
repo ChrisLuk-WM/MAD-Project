@@ -1,0 +1,19 @@
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:drawable="@drawable/ic_walking">
+
+    <target android:name="walking">
+        <aapt:attr name="android:animation">
+            <set android:ordering="sequentially">
+                <objectAnimator
+                    android:duration="500"
+                    android:propertyName="rotation"
+                    android:valueFrom="0"
+                    android:valueTo="10"
+                    android:valueType="floatType"
+                    android:repeatMode="reverse"
+                    android:repeatCount="infinite"/>
+            </set>
+        </aapt:attr>
+    </target>
+</animated-vector>

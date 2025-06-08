@@ -1,4 +1,4 @@
-package com.example.mad_project.ui.home;
+package com.example.mad_project.ui.pages.home;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;

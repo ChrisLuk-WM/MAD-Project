@@ -1,4 +1,4 @@
-package com.example.mad_project.views;
+package com.example.mad_project.ui.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;

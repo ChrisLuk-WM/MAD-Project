@@ -1,4 +1,4 @@
-package com.example.mad_project.ui.statistics;
+package com.example.mad_project.ui.pages.statistics;
 
 import android.location.Location;
 import android.os.Bundle;

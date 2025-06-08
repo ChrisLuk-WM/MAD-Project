@@ -1,22 +1,22 @@
-package com.example.mad_project.ui.route;
+package com.example.mad_project.ui.pages.profile;
 
 import android.os.Bundle;
 import com.example.mad_project.R;
 import com.example.mad_project.ui.BaseActivity;
 
-public class RoutePlanningActivity extends BaseActivity {
+public class MyProfileActivity extends BaseActivity {
     @Override
     protected int getLayoutResourceId() {
-        return R.layout.activity_route_planning;
+        return R.layout.activity_profile;
     }
 
     @Override
     protected void initViews() {
-        // Initialize route planning views
+        // Initialize profile views
     }
 
     @Override
     protected void setupActions() {
-        // Setup route planning actions
+        // Setup profile actions
     }
 }

@@ -65,7 +65,7 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <com.example.mad_project.views.MenuCardView
+            <com.example.mad_project.ui.views.MenuCardView
                 android:id="@+id/card_profile"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -76,7 +76,7 @@
                 app:cardTitle="My Profile"
                 app:cardSubtitle="View and edit your profile"/>
 
-            <com.example.mad_project.views.MenuCardView
+            <com.example.mad_project.ui.views.MenuCardView
                 android:id="@+id/card_route"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -87,7 +87,7 @@
                 app:cardTitle="Route"
                 app:cardSubtitle="View and edit your Route"/>
 
-            <com.example.mad_project.views.MenuCardView
+            <com.example.mad_project.ui.views.MenuCardView
                 android:id="@+id/card_statistics"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

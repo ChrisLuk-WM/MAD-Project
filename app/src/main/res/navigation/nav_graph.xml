@@ -6,7 +6,7 @@
 
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.example.mad_project.ui.home.HomeFragment"
+        android:name="com.example.mad_project.ui.pages.home.HomeFragment"
         android:label="Home">
         <action
             android:id="@+id/action_home_to_profile"
@@ -21,16 +21,16 @@
 
     <activity
         android:id="@+id/profileActivity"
-        android:name="com.example.mad_project.ui.profile.MyProfileActivity"
+        android:name="com.example.mad_project.ui.pages.profile.MyProfileActivity"
         android:label="My Profile" />
 
     <activity
         android:id="@+id/routePlanningActivity"
-        android:name="com.example.mad_project.ui.route.RoutePlanningActivity"
+        android:name="com.example.mad_project.ui.pages.route.RoutePlanningActivity"
         android:label="Route Planning" />
 
     <activity
         android:id="@+id/statisticsActivity"
-        android:name="com.example.mad_project.ui.statistics.StatisticsActivity"
+        android:name="com.example.mad_project.ui.pages.statistics.StatisticsActivity"
         android:label="Statistics" />
 </navigation>

@@ -14,9 +14,9 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.mad_project.MainActivity;
-import com.example.mad_project.ui.profile.MyProfileActivity;
-import com.example.mad_project.ui.route.RoutePlanningActivity;
-import com.example.mad_project.ui.statistics.StatisticsActivity;
+import com.example.mad_project.ui.pages.profile.MyProfileActivity;
+import com.example.mad_project.ui.pages.route.RoutePlanningActivity;
+import com.example.mad_project.ui.pages.statistics.StatisticsActivity;
 import com.google.android.material.navigation.NavigationView;
 import com.example.mad_project.R;
 
