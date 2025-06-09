@@ -28,9 +28,14 @@ public class TrailWithImages {
 
     // Helper method to get thumbnail
     public TrailImage getThumbnail() {
-        return galleryImages.stream()
+        TrailImage thumbnail = galleryImages.stream()
                 .filter(TrailImage::isThumbnail)
                 .findFirst()
                 .orElse(null);
+        if (thumbnail == null && !galleryImages.isEmpty()){
+            thumbnail = galleryImages.get(0);
+        }
+
+        return thumbnail;
     }
 }
