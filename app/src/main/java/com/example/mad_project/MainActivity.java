@@ -27,14 +27,12 @@ import com.example.mad_project.sensors.SensorsController;
 import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.ui.BaseActivity;
 import com.example.mad_project.utils.DownloadManager;
-import com.example.mad_project.statistics.StatisticsCalculator;
 import com.example.mad_project.constants.RequiredPermissions;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
     private AppDatabase database;
     private HikingTrailImageDownloader imageDownloader;
-    private StatisticsCalculator statisticsCalculator;
     private NavController navController;
     private SensorsController sensorsController;
     private StatisticsManager statisticsManager;
@@ -47,7 +45,6 @@ public class MainActivity extends BaseActivity {
         imageDownloader = new HikingTrailImageDownloader(this);
 
         DownloadManager.getInstance(this);
-        statisticsCalculator = StatisticsCalculator.getInstance(this);
         statisticsManager = StatisticsManager.getInstance();
         sensorsController = SensorsController.getInstance(this);
 
@@ -70,12 +67,6 @@ public class MainActivity extends BaseActivity {
                     .build();
             NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         }
-    }
-
-    private void startTracking() {
-        if (statisticsManager.isSessionActive()) return;
-        sensorsController.startTracking();
-        statisticsCalculator.startSession();
     }
 
 

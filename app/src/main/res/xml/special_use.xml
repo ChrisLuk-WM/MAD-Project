@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<special-use xmlns:android="http://schemas.android.com/apk/res/android">
+    <foreground-service-type>
+        <location description="@string/special_use_description" />
+    </foreground-service-type>
+</special-use>

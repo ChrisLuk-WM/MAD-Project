@@ -3,4 +3,5 @@
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="tracking_service_description">This service tracks your hiking activity, including location, steps, and elevation, even when the app is in background.</string>
+    <string name="special_use_description">Location tracking for hiking</string>
 </resources>

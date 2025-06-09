@@ -1,15 +1,13 @@
 package com.example.mad_project.sensors;
 
 import android.content.Context;
-import android.content.Intent;
 import android.location.Location;
-import android.os.Build;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.example.mad_project.constants.ServiceConstants;
-import com.example.mad_project.services.TrackingService;
+import com.example.mad_project.services.TrackingWorkManager;
+import com.example.mad_project.statistics.StatisticsCalculator;
 import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.statistics.StatisticsType;
 
@@ -25,13 +23,17 @@ public class SensorsController {
     private final Context context;
     private final List<SensorHandler> sensorHandlers = new ArrayList<>();
     private final StatisticsManager statisticsManager;
+    private final StatisticsCalculator statisticsCalculator;
+    private final TrackingWorkManager trackingWorkManager;
 
     // LiveData for tracking status only
     private final MutableLiveData<Boolean> isTracking = new MutableLiveData<>(false);
 
     private SensorsController(Context context) {
         this.context = context.getApplicationContext();
+        this.trackingWorkManager = new TrackingWorkManager(context);
         this.statisticsManager = StatisticsManager.getInstance();
+        this.statisticsCalculator = StatisticsCalculator.getInstance(context);
 
         initializeSensorHandlers();
     }
@@ -49,26 +51,12 @@ public class SensorsController {
         }
         return instance;
     }
-    private void startServices() {
-        Intent serviceIntent = new Intent(context, TrackingService.class);
-        serviceIntent.setAction(ServiceConstants.ACTION_START_TRACKING);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(serviceIntent);
-        } else {
-            context.startService(serviceIntent);
-        }
-    }
-
-    private void stopServices() {
-        Intent serviceIntent = new Intent(context, TrackingService.class);
-        serviceIntent.setAction(ServiceConstants.ACTION_STOP_TRACKING);
-        context.startService(serviceIntent);
-    }
 
     public void startTracking() {
         if (statisticsManager.isSessionActive()) return;
 
-        startServices();
+        trackingWorkManager.startTracking();
+        statisticsCalculator.startSession();
         statisticsManager.startSession();
         for (SensorHandler handler : sensorHandlers) {
             handler.startTracking();
@@ -77,10 +65,13 @@ public class SensorsController {
     }
 
     public void stopTracking() {
+        trackingWorkManager.stopTracking();
         for (SensorHandler handler : sensorHandlers) {
             handler.stopTracking();
         }
         statisticsManager.stopSession();
+        // Stop statistics calculation
+        statisticsCalculator.stopSession();
         isTracking.setValue(false);
     }
 
