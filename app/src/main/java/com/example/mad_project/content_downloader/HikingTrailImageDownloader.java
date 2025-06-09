@@ -261,7 +261,7 @@ public class HikingTrailImageDownloader {
                     trailImage.setImagePath(imageFile.getAbsolutePath());
                     trailImage.setImageUrl(imgUrl);
                     trailImage.setDownloadTime(System.currentTimeMillis());
-                    trailImage.setThumbnail(false);
+                    trailImage.setThumbnail(fileName.contains("cover"));
                     trailImage.setDescription(description);
 
                     database.trailImageDao().insert(trailImage);

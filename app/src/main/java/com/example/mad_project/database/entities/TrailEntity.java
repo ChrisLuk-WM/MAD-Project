@@ -16,7 +16,6 @@ public class TrailEntity {
     private double durationRating;
     private String sourceUrl;
     private String imagePath;    // Local storage path for trail images
-    private String thumbnailPath; // Path for thumbnail image
     private long lastUpdated;    // Timestamp for data freshness
 
     // Constructor matching the JSON structure
@@ -55,9 +54,6 @@ public class TrailEntity {
 
     public String getImagePath() { return imagePath; }
     public void setImagePath(String imagePath) { this.imagePath = imagePath; }
-
-    public String getThumbnailPath() { return thumbnailPath; }
-    public void setThumbnailPath(String thumbnailPath) { this.thumbnailPath = thumbnailPath; }
 
     public long getLastUpdated() {
         return lastUpdated;

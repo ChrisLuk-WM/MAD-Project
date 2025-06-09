@@ -22,7 +22,7 @@ public interface TrailDao {
     @Delete
     void delete(TrailEntity trail);
 
-    @Query("SELECT * FROM trails")
+    @Query("SELECT * FROM trails WHERE id != 1")
     LiveData<List<TrailEntity>> getAllTrails();
 
     @Query("SELECT * FROM trails WHERE id = :trailId")

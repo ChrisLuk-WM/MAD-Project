@@ -54,8 +54,6 @@ public class MainActivity extends BaseActivity {
         // Load data
         imageDownloader.loadTrailsData();
 
-        startTracking();
-
     }
 
     @Override
