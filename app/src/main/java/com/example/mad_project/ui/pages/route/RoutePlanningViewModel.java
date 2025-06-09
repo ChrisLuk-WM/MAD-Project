@@ -9,6 +9,8 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -76,5 +78,37 @@ public class RoutePlanningViewModel extends AndroidViewModel {  // Change to And
             }
             throw new IllegalArgumentException("Unknown ViewModel class");
         }
+    }
+
+    public void sortTrails(List<TrailWithImages> trails, String sortBy, boolean isAscending) {
+        Comparator<TrailWithImages> comparator;
+
+        switch (sortBy) {
+            case "difficulty":
+                comparator = (a, b) -> Double.compare(
+                        a.getTrail().getDifficultyRating(),
+                        b.getTrail().getDifficultyRating());
+                break;
+            case "length":
+                comparator = (a, b) -> Double.compare(
+                        a.getTrail().getLengthRating(),
+                        b.getTrail().getLengthRating());
+                break;
+            case "duration":
+                comparator = (a, b) -> Double.compare(
+                        a.getTrail().getDurationRating(),
+                        b.getTrail().getDurationRating());
+                break;
+            default: // "name"
+                comparator = (a, b) -> a.getTrail().getTrailName()
+                        .compareTo(b.getTrail().getTrailName());
+                break;
+        }
+
+        if (!isAscending) {
+            comparator = comparator.reversed();
+        }
+
+        Collections.sort(trails, comparator);
     }
 }
