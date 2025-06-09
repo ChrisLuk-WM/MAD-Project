@@ -36,4 +36,7 @@ public interface TrailImageDao {
 
     @Query("SELECT * FROM trail_images WHERE imagePath = :url LIMIT 1")
     TrailImage getImageByUrl(String url);
+
+    @Query("SELECT * FROM trail_images WHERE trailId = :trailId AND isThumbnail = 1 LIMIT 1")
+    TrailImage getTrailThumbnail(long trailId);
 }

@@ -7,36 +7,48 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import com.example.mad_project.database.AppDatabase;
 import com.example.mad_project.database.entities.TrailEntity;
+import com.example.mad_project.database.entities.TrailImage;
 
 public class RoutePlanningViewModel extends AndroidViewModel {  // Change to AndroidViewModel
     private final AppDatabase database;
     private final ExecutorService executor;
-    private final MutableLiveData<List<TrailEntity>> trails;
+    private final MutableLiveData<List<TrailWithThumbnail>> trailsWithThumbnails;
 
     public RoutePlanningViewModel(@NonNull Application application) {
-        super(application);  // Call super with application
+        super(application);
         database = AppDatabase.getDatabase(application);
         executor = Executors.newSingleThreadExecutor();
-        trails = new MutableLiveData<>();
+        trailsWithThumbnails = new MutableLiveData<>();
 
-        // Initialize trails data
-        loadTrails();
+        loadTrailsWithThumbnails();
     }
 
-    private void loadTrails() {
-        database.trailDao().getAllTrails().observeForever(trailList -> {
-            trails.postValue(trailList);
+    private void loadTrailsWithThumbnails() {
+        database.trailDao().getAllTrails().observeForever(trails -> {
+            executor.execute(() -> {
+                List<TrailWithThumbnail> trailsList = new ArrayList<>();
+                if (trails != null) {
+                    for (TrailEntity trail : trails) {
+                        TrailImage thumbnail = database.trailImageDao()
+                                .getTrailThumbnail(trail.getId());
+                        trailsList.add(new TrailWithThumbnail(trail, thumbnail));
+                    }
+                }
+                trailsWithThumbnails.postValue(trailsList);
+            });
         });
     }
 
-    public LiveData<List<TrailEntity>> getTrails() {
-        return trails;
+    public LiveData<List<TrailWithThumbnail>> getTrailsWithThumbnails() {
+        return trailsWithThumbnails;
     }
 
     @Override

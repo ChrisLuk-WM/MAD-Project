@@ -57,8 +57,6 @@ public class RoutePlanningActivity extends BaseActivity {
     @Override
     protected void initViews() {
         routesRecyclerView = findViewById(R.id.routes_recycler_view);
-        tabLayout = findViewById(R.id.tab_layout);
-        fabStartFreeHiking = findViewById(R.id.fab_start_free_hiking);
 
         routesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         routeAdapter = new RouteAdapter(this, new RouteAdapter.OnRouteClickListener() {
@@ -73,45 +71,19 @@ public class RoutePlanningActivity extends BaseActivity {
             }
         });
         routesRecyclerView.setAdapter(routeAdapter);
-
-        // Set initial visibility
-        routesRecyclerView.setVisibility(View.VISIBLE);
-        fabStartFreeHiking.hide();
     }
 
     @Override
     protected void setupActions() {
-        // Observe trails data through ViewModel
-        if (viewModel != null) {  // Add null check
-            viewModel.getTrails().observe(this, trails -> {
+        // Remove TabLayout and FAB related code since they're not needed anymore
+
+        if (viewModel != null) {
+            viewModel.getTrailsWithThumbnails().observe(this, trails -> {
                 if (trails != null) {
                     routeAdapter.setTrails(trails);
                 }
             });
         }
-
-        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-            @Override
-            public void onTabSelected(TabLayout.Tab tab) {
-                if (tab.getPosition() == 0) {
-                    // Show all routes
-                    routesRecyclerView.setVisibility(View.VISIBLE);
-                    fabStartFreeHiking.hide();
-                } else {
-                    // Free hiking tab
-                    routesRecyclerView.setVisibility(View.GONE);
-                    fabStartFreeHiking.show();
-                }
-            }
-
-            @Override
-            public void onTabUnselected(TabLayout.Tab tab) {}
-
-            @Override
-            public void onTabReselected(TabLayout.Tab tab) {}
-        });
-
-        fabStartFreeHiking.setOnClickListener(v -> startFreeHiking());
     }
 
     private void startHiking(TrailEntity trail) {

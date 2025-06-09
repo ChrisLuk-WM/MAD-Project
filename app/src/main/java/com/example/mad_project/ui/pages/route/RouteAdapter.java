@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mad_project.R;
 import com.example.mad_project.database.entities.TrailEntity;
+import com.example.mad_project.database.entities.TrailImage;
+import com.google.android.material.button.MaterialButton;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -22,7 +24,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHolder> {
-    private List<TrailEntity> trails = new ArrayList<>();
+    private List<TrailWithThumbnail> trails = new ArrayList<>();
     private final Context context;
     private final OnRouteClickListener listener;
 
@@ -46,8 +48,8 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHol
 
     @Override
     public void onBindViewHolder(@NonNull RouteViewHolder holder, int position) {
-        TrailEntity trail = trails.get(position);
-        holder.bind(trail);
+        TrailWithThumbnail trailWithThumbnail = trails.get(position);
+        holder.bind(trailWithThumbnail);
     }
 
     @Override
@@ -55,7 +57,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHol
         return trails.size();
     }
 
-    public void setTrails(List<TrailEntity> trails) {
+    public void setTrails(List<TrailWithThumbnail> trails) {
         this.trails = trails;
         notifyDataSetChanged();
     }
@@ -66,7 +68,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHol
         private final TextView difficultyRating;
         private final TextView lengthRating;
         private final TextView durationRating;
-        private final Button btnStartRoute;
+        private final MaterialButton btnStartRoute;
 
         public RouteViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -78,27 +80,30 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHol
             btnStartRoute = itemView.findViewById(R.id.btn_start_route);
         }
 
-        void bind(TrailEntity trail) {
+        void bind(TrailWithThumbnail trailWithThumbnail) {
+            TrailEntity trail = trailWithThumbnail.getTrail();
+            TrailImage thumbnail = trailWithThumbnail.getThumbnail();
+
             routeName.setText(trail.getTrailName());
             difficultyRating.setText(String.format(Locale.getDefault(), "%.1f", trail.getDifficultyRating()));
             lengthRating.setText(String.format(Locale.getDefault(), "%.1f km", trail.getLengthRating()));
             durationRating.setText(String.format(Locale.getDefault(), "%.1f h", trail.getDurationRating()));
 
-            // Load image using BitmapFactory
-            if (trail.getImagePath() != null) {
+            // Load thumbnail
+            if (thumbnail != null && thumbnail.getImagePath() != null) {
                 try {
-                    File imgFile = new File(trail.getImagePath());
+                    File imgFile = new File(thumbnail.getImagePath());
                     if (imgFile.exists()) {
                         Bitmap bitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
                         routeImage.setImageBitmap(bitmap);
                     } else {
-                        routeImage.setImageResource(R.drawable.ic_hiking); // fallback image
+                        routeImage.setImageResource(R.drawable.ic_hiking);
                     }
                 } catch (Exception e) {
-                    routeImage.setImageResource(R.drawable.ic_hiking); // fallback image
+                    routeImage.setImageResource(R.drawable.ic_hiking);
                 }
             } else {
-                routeImage.setImageResource(R.drawable.ic_hiking); // fallback image
+                routeImage.setImageResource(R.drawable.ic_hiking);
             }
 
             itemView.setOnClickListener(v -> listener.onRouteClick(trail));
