@@ -33,6 +33,7 @@ public class DownloadManager {
         void onAllDownloadsPaused();
         void onConnectionLost();
         void onConnectionRestored();
+        void onAllDownloadsFinished();
     }
 
     private static final String TAG = "DownloadManager";
@@ -180,12 +181,15 @@ public class DownloadManager {
                     }
 
                     try {
-                        Log.d(TAG, "Queue size: " + getQueueSize());
                         task.download();
                     } finally {
                         synchronized (activeDownloads) {
                             activeDownloads.remove(request.url);
                             activeDownloadsCount.decrementAndGet();
+
+                            if (getQueueSize() == 0){
+                                downloadCallback.onAllDownloadsFinished();
+                            }
                         }
                     }
 

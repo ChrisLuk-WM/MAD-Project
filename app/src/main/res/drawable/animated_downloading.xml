@@ -1,0 +1,35 @@
+<animated-vector
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="24dp"
+            android:height="24dp"
+            android:viewportWidth="24"
+            android:viewportHeight="24">
+            <group
+                android:name="downloadGroup"
+                android:pivotX="12"
+                android:pivotY="12">
+                <path
+                    android:name="downloadPath"
+                    android:fillColor="@android:color/white"
+                    android:pathData="M19,9h-4V3H9v6H5l7,7 7,-7zM5,18v2h14v-2H5z"/>
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <target android:name="downloadGroup">
+        <aapt:attr name="android:animation">
+                <!-- Fade in from top -->
+            <objectAnimator
+                android:duration="3000"
+                android:propertyName="translateY"
+                android:valueFrom="-20"
+                android:valueTo="22"
+                android:repeatCount="infinite"
+                android:repeatMode="restart"/>
+
+        </aapt:attr>
+    </target>
+</animated-vector>

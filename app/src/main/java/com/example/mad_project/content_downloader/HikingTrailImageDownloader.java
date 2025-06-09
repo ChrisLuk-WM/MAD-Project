@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -40,8 +41,11 @@ public class HikingTrailImageDownloader {
     private final AppDatabase database;
     private final DownloadManager downloadManager;
     private final CacheManager cacheManager;
-    private boolean isDownloadPaused = false;
+    private static volatile boolean isDownloadPaused = true;
     private final MapContentHandler mapContentHandler;
+    private DownloadManager.DownloadCallback downloadCallback;
+
+    private static final List<DownloadStateListener> listeners = new ArrayList<>();
 
     public HikingTrailImageDownloader(Context context) {
         this.context = context;
@@ -54,59 +58,80 @@ public class HikingTrailImageDownloader {
         setupDownloadCallbacks();
     }
 
+    public void setDownloadCallback(DownloadManager.DownloadCallback callback) {
+        downloadManager.setDownloadCallback(callback);
+    }
     private void setupDownloadCallbacks() {
         downloadManager.setDownloadCallback(new DownloadManager.DownloadCallback() {
             @Override
             public void onProgress(String url, int progress) {
-                // Update UI with download progress
+                isDownloadPaused = false;
+                notifyListeners();
+                if (downloadCallback != null) {
+                    downloadCallback.onProgress(url, progress);
+                }
             }
 
             @Override
             public void onComplete(String url, File file) {
-                // Handle download completion
+                isDownloadPaused = false;
+                notifyListeners();
+                if (downloadCallback != null) {
+                    downloadCallback.onComplete(url, file);
+                }
+
             }
 
             @Override
             public void onError(String url, DownloadError error, String message) {
-                switch (error) {
-                    case NETWORK_UNAVAILABLE:
-                        // Handle network unavailable
-                        break;
-                    case CONNECTION_TIMEOUT:
-                        // Handle timeout
-                        break;
-                    case CONNECTION_LOST:
-                        pauseDownloads();
-                        // Handle connection lost
-                        break;
-                    case INSUFFICIENT_STORAGE:
-                        // Handle storage issues
-                        break;
-                    // Handle other errors...
+                if (downloadCallback != null) {
+                    downloadCallback.onError(url, error, message);
                 }
-
-                // pauseDownloads();
             }
 
             @Override
             public void onPaused(String url, long bytesDownloaded) {
-                pauseDownloads();
+                isDownloadPaused = true;
+                notifyListeners();
+                if (downloadCallback != null) {
+                    downloadCallback.onPaused(url, bytesDownloaded);
+                }
             }
 
             @Override
             public void onAllDownloadsPaused() {
-                // Handle all downloads paused
+                isDownloadPaused = true;
+                notifyListeners();
+                if (downloadCallback != null) {
+                    downloadCallback.onAllDownloadsPaused();
+                }
             }
 
             @Override
             public void onConnectionLost() {
-                pauseDownloads();
-                // Handle network connection lost
+                isDownloadPaused = true;
+                notifyListeners();
+                if (downloadCallback != null) {
+                    downloadCallback.onConnectionLost();
+                }
             }
 
             @Override
             public void onConnectionRestored() {
-                // Handle network connection restored
+                isDownloadPaused = false;
+                notifyListeners();
+                if (downloadCallback != null) {
+                    downloadCallback.onConnectionRestored();
+                }
+            }
+
+            @Override
+            public void onAllDownloadsFinished() {
+                isDownloadPaused = true;
+                notifyListeners();
+                if (downloadCallback != null) {
+                    downloadCallback.onConnectionLost();
+                }
             }
         });
     }
@@ -130,6 +155,7 @@ public class HikingTrailImageDownloader {
                         .anyMatch(state -> state != DownloadState.COMPLETED);
 
                 if (hasIncompleteDownloads) {
+                    notifyListeners();
                     resumeIncompleteDownloads(downloadStates);
                 } else {
                     List<TrailEntity> existingTrails = database.trailDao().getAllTrailsList();
@@ -138,6 +164,7 @@ public class HikingTrailImageDownloader {
                             existingTrails.stream().anyMatch(trail -> !trail.isInited());
 
                     if (needsUpdate) {
+                        notifyListeners();
                         startFreshDownload();
                     }
                 }
@@ -167,14 +194,40 @@ public class HikingTrailImageDownloader {
         }
     }
 
+    // Method to add listeners
+    public static void addDownloadStateListener(DownloadStateListener listener) {
+        if (!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
+    }
+
+    // Method to remove listeners
+    public static void removeDownloadStateListener(DownloadStateListener listener) {
+        listeners.remove(listener);
+    }
+
+    public static boolean isDownloading() {
+        // Log.d("Downloading: ", isDownloadPaused? "False": "True");
+        return !isDownloadPaused;
+    }
+
+    // Modified pause/resume methods to notify listeners
     public void pauseDownloads() {
         isDownloadPaused = true;
         downloadManager.pauseAll();
+        notifyListeners();
     }
 
     public void resumeDownloads() {
         isDownloadPaused = false;
         downloadManager.resumeAll();
+        notifyListeners();
+    }
+
+    private static void notifyListeners() {
+        for (DownloadStateListener listener : listeners) {
+            listener.onDownloadStateChanged(isDownloading());
+        }
     }
 
     public void clearCache() {

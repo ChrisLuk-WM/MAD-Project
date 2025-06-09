@@ -2,30 +2,42 @@
 package com.example.mad_project.ui;
 
 import android.content.Intent;
+import android.graphics.drawable.AnimatedVectorDrawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.mad_project.MainActivity;
+import com.example.mad_project.constants.DownloadError;
+import com.example.mad_project.content_downloader.DownloadStateListener;
+import com.example.mad_project.content_downloader.HikingTrailImageDownloader;
 import com.example.mad_project.ui.pages.profile.MyProfileActivity;
+import com.example.mad_project.ui.pages.route.RouteDetailsActivity;
 import com.example.mad_project.ui.pages.route.RoutePlanningActivity;
 import com.example.mad_project.ui.pages.statistics.StatisticsActivity;
+import com.example.mad_project.utils.DownloadManager;
 import com.google.android.material.navigation.NavigationView;
 import com.example.mad_project.R;
 
-public abstract class BaseActivity extends AppCompatActivity {
+import java.io.File;
+
+public abstract class BaseActivity extends AppCompatActivity implements DownloadStateListener {
     protected Toolbar toolbar;
     protected DrawerLayout drawerLayout;
     protected NavigationView navigationView;
     protected ActionBarDrawerToggle drawerToggle;
-
+    protected MenuItem downloadMenuItem;
+    protected HikingTrailImageDownloader imageDownloader;
+    private AnimatedVectorDrawable downloadingAnimation;
     protected boolean useNavigationDrawer() {
         return true; // Default to true for backward compatibility
     }
@@ -34,6 +46,11 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutResourceId());
+
+        imageDownloader = new HikingTrailImageDownloader(this);
+        HikingTrailImageDownloader.addDownloadStateListener(this);
+        downloadingAnimation = (AnimatedVectorDrawable)
+                getDrawable(R.drawable.animated_downloading).mutate();
 
         // Initialize toolbar first
         toolbar = findViewById(R.id.toolbar_layout);
@@ -58,6 +75,31 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         initViews();
         setupActions();
+    }
+
+    @Override
+    public void onDownloadStateChanged(boolean isDownloading) {
+        // Run on UI thread since this might be called from a background thread
+        runOnUiThread(() -> {
+            if (downloadMenuItem == null) return;
+
+            if (isDownloading) {
+                try {
+                    if (downloadingAnimation.isRunning()) {
+                        return;
+                    }
+                    downloadMenuItem.setIcon(downloadingAnimation);
+                    downloadingAnimation.start();
+                } catch (Exception e) {
+                    downloadMenuItem.setIcon(R.drawable.ic_download);
+                }
+            } else {
+                if (downloadingAnimation != null && downloadingAnimation.isRunning()) {
+                    downloadingAnimation.stop();
+                }
+                downloadMenuItem.setIcon(R.drawable.ic_download);
+            }
+        });
     }
 
     public void hideMainToolbar() {
@@ -167,14 +209,61 @@ public abstract class BaseActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_common, menu);
+        downloadMenuItem = menu.findItem(R.id.action_download);
+
+        // Only show download button in Route activities
+        if (this instanceof RoutePlanningActivity ||
+                this instanceof RouteDetailsActivity) {
+            downloadMenuItem.setVisible(true);
+        } else {
+            downloadMenuItem.setVisible(false);
+        }
+
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (drawerToggle.onOptionsItemSelected(item)) {
+        if (item.getItemId() == R.id.action_download) {
+            handleDownloadAction();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    protected void handleDownloadAction() {
+        if (imageDownloader.isDownloading()) {
+            imageDownloader.pauseDownloads();
+        } else {
+            checkAndStartDownload();
+        }
+    }
+
+    protected void checkAndStartDownload() {
+        new AlertDialog.Builder(this)
+                .setTitle("Download Content")
+                .setMessage("Do you want to download hiking trail content?")
+                .setPositiveButton("Download", (dialog, which) -> {
+                    startDownload();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    protected void startDownload() {
+        imageDownloader.loadTrailsData();
+    }
+
+    protected void updateDownloadProgress(int progress) {
+        // Optional: Show download progress in toolbar
+        // Could implement a custom view in toolbar to show progress
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (downloadingAnimation != null && downloadingAnimation.isRunning()) {
+            downloadingAnimation.stop();
+        }
     }
 }

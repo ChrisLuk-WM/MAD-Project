@@ -51,9 +51,6 @@ public class MainActivity extends BaseActivity {
         statisticsManager = StatisticsManager.getInstance();
         sensorsController = SensorsController.getInstance(this);
 
-        // Load data
-        imageDownloader.loadTrailsData();
-
     }
 
     @Override
