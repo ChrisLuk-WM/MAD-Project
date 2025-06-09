@@ -31,4 +31,7 @@ public interface TrailDao {
 
     @Query("SELECT * FROM trails WHERE id != 1")
     List<TrailEntity> getAllTrailsList();
+
+    @Query("SELECT * FROM trails WHERE id = :trailId LIMIT 1")
+    TrailEntity getTrailByIdSync(long trailId);
 }

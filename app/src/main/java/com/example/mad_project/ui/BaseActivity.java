@@ -26,24 +26,38 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected NavigationView navigationView;
     protected ActionBarDrawerToggle drawerToggle;
 
+    protected boolean useNavigationDrawer() {
+        return true; // Default to true for backward compatibility
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(getLayoutResourceId());
 
-        // Initialize drawer and toolbar
-        drawerLayout = findViewById(R.id.drawer_layout);
-        navigationView = findViewById(R.id.nav_view);
+        // Initialize toolbar first
         toolbar = findViewById(R.id.toolbar_layout);
-
         if (toolbar != null) {
             setSupportActionBar(toolbar);
-            setupDrawer();
+        }
+
+        // Only setup drawer if needed
+        if (useNavigationDrawer()) {
+            drawerLayout = findViewById(R.id.drawer_layout);
+            navigationView = findViewById(R.id.nav_view);
+
+            if (drawerLayout != null && navigationView != null) {
+                setupDrawer();
+                setupNavigationView();
+            }
+        } else if (getSupportActionBar() != null) {
+            // If not using drawer, show back button
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
 
         initViews();
         setupActions();
-        setupNavigationView();
     }
 
     public void hideMainToolbar() {

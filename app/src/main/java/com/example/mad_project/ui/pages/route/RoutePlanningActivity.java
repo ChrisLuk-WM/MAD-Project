@@ -1,5 +1,6 @@
 package com.example.mad_project.ui.pages.route;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -66,8 +67,11 @@ public class RoutePlanningActivity extends BaseActivity {
             }
 
             @Override
-            public void onRouteClick(TrailEntity trail) {
-                showRouteDetails(trail);
+            public void onRouteClick(TrailWithImages trailWithImages) {
+                // Start RouteDetailsActivity with all the data
+                Intent intent = new Intent(RoutePlanningActivity.this, RouteDetailsActivity.class);
+                intent.putExtra("trail_id", trailWithImages.getTrail().getId());
+                startActivity(intent);
             }
         });
         routesRecyclerView.setAdapter(routeAdapter);
@@ -75,10 +79,8 @@ public class RoutePlanningActivity extends BaseActivity {
 
     @Override
     protected void setupActions() {
-        // Remove TabLayout and FAB related code since they're not needed anymore
-
         if (viewModel != null) {
-            viewModel.getTrailsWithThumbnails().observe(this, trails -> {
+            viewModel.getTrails().observe(this, trails -> {
                 if (trails != null) {
                     routeAdapter.setTrails(trails);
                 }

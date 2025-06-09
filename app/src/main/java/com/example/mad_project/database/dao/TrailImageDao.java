@@ -39,4 +39,7 @@ public interface TrailImageDao {
 
     @Query("SELECT * FROM trail_images WHERE trailId = :trailId AND isThumbnail = 1 LIMIT 1")
     TrailImage getTrailThumbnail(long trailId);
+
+    @Query("SELECT * FROM trail_images WHERE trailId = :trailId ORDER BY downloadTime DESC")
+    List<TrailImage> getTrailImages(long trailId);
 }

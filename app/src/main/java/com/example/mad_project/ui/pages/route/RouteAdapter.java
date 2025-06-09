@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -24,13 +23,15 @@ import java.util.List;
 import java.util.Locale;
 
 public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHolder> {
-    private List<TrailWithThumbnail> trails = new ArrayList<>();
+    private static final int TYPE_IMAGE = 0;
+    private static final int TYPE_EMPTY = 1;
+    private List<TrailWithImages> trails = new ArrayList<>();
     private final Context context;
     private final OnRouteClickListener listener;
 
     public interface OnRouteClickListener {
         void onRouteStart(TrailEntity trail);
-        void onRouteClick(TrailEntity trail);
+        void onRouteClick(TrailWithImages trailWithImages);  // Updated to pass full data
     }
 
     public RouteAdapter(Context context, OnRouteClickListener listener) {
@@ -48,8 +49,8 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHol
 
     @Override
     public void onBindViewHolder(@NonNull RouteViewHolder holder, int position) {
-        TrailWithThumbnail trailWithThumbnail = trails.get(position);
-        holder.bind(trailWithThumbnail);
+        TrailWithImages trailWithImages = trails.get(position);
+        holder.bind(trailWithImages);
     }
 
     @Override
@@ -57,7 +58,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHol
         return trails.size();
     }
 
-    public void setTrails(List<TrailWithThumbnail> trails) {
+    public void setTrails(List<TrailWithImages> trails) {
         this.trails = trails;
         notifyDataSetChanged();
     }
@@ -68,7 +69,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHol
         private final TextView difficultyRating;
         private final TextView lengthRating;
         private final TextView durationRating;
-        private final MaterialButton btnStartRoute;
+        private final ImageView btnStartRoute;
 
         public RouteViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -80,9 +81,9 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHol
             btnStartRoute = itemView.findViewById(R.id.btn_start_route);
         }
 
-        void bind(TrailWithThumbnail trailWithThumbnail) {
-            TrailEntity trail = trailWithThumbnail.getTrail();
-            TrailImage thumbnail = trailWithThumbnail.getThumbnail();
+        void bind(TrailWithImages trailWithImages) {
+            TrailEntity trail = trailWithImages.getTrail();
+            TrailImage thumbnail = trailWithImages.getThumbnail();
 
             routeName.setText(trail.getTrailName());
             difficultyRating.setText(String.format(Locale.getDefault(), "%.1f", trail.getDifficultyRating()));
@@ -106,7 +107,7 @@ public class RouteAdapter extends RecyclerView.Adapter<RouteAdapter.RouteViewHol
                 routeImage.setImageResource(R.drawable.ic_hiking);
             }
 
-            itemView.setOnClickListener(v -> listener.onRouteClick(trail));
+            itemView.setOnClickListener(v -> listener.onRouteClick(trailWithImages));
             btnStartRoute.setOnClickListener(v -> listener.onRouteStart(trail));
         }
     }

@@ -66,9 +66,15 @@
             android:parentActivityName=".MainActivity" />
 
         <activity
+            android:name=".ui.pages.route.RouteDetailsActivity"
+            android:label="Route Detail"
+            android:parentActivityName=".ui.pages.route.RoutePlanningActivity" />
+
+        <activity
             android:name=".ui.pages.statistics.StatisticsActivity"
             android:label="Statistics"
             android:parentActivityName=".MainActivity" />
+
     </application>
 
 </manifest>

@@ -20,36 +20,38 @@ import com.example.mad_project.database.entities.TrailImage;
 public class RoutePlanningViewModel extends AndroidViewModel {  // Change to AndroidViewModel
     private final AppDatabase database;
     private final ExecutorService executor;
-    private final MutableLiveData<List<TrailWithThumbnail>> trailsWithThumbnails;
+    private final MutableLiveData<List<TrailWithImages>> trailsList;
 
     public RoutePlanningViewModel(@NonNull Application application) {
         super(application);
         database = AppDatabase.getDatabase(application);
         executor = Executors.newSingleThreadExecutor();
-        trailsWithThumbnails = new MutableLiveData<>();
+        trailsList = new MutableLiveData<>();
 
-        loadTrailsWithThumbnails();
+        loadTrails();
     }
 
-    private void loadTrailsWithThumbnails() {
+    private void loadTrails() {
         database.trailDao().getAllTrails().observeForever(trails -> {
             executor.execute(() -> {
-                List<TrailWithThumbnail> trailsList = new ArrayList<>();
+                List<TrailWithImages> trailsWithImages = new ArrayList<>();
                 if (trails != null) {
                     for (TrailEntity trail : trails) {
-                        TrailImage thumbnail = database.trailImageDao()
-                                .getTrailThumbnail(trail.getId());
-                        trailsList.add(new TrailWithThumbnail(trail, thumbnail));
+                        // Load all images for each trail
+                        List<TrailImage> images = database.trailImageDao()
+                                .getTrailImages(trail.getId());
+                        trailsWithImages.add(new TrailWithImages(trail, images));
                     }
                 }
-                trailsWithThumbnails.postValue(trailsList);
+                trailsList.postValue(trailsWithImages);
             });
         });
     }
 
-    public LiveData<List<TrailWithThumbnail>> getTrailsWithThumbnails() {
-        return trailsWithThumbnails;
+    public LiveData<List<TrailWithImages>> getTrails() {
+        return trailsList;
     }
+
 
     @Override
     protected void onCleared() {
