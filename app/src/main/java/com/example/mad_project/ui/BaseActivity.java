@@ -21,6 +21,7 @@ import com.example.mad_project.constants.DownloadError;
 import com.example.mad_project.content_downloader.DownloadStateListener;
 import com.example.mad_project.content_downloader.HikingTrailImageDownloader;
 import com.example.mad_project.ui.pages.profile.MyProfileActivity;
+import com.example.mad_project.ui.pages.profile.UserDashboardActivity;
 import com.example.mad_project.ui.pages.route.RouteDetailsActivity;
 import com.example.mad_project.ui.pages.route.RoutePlanningActivity;
 import com.example.mad_project.ui.pages.statistics.StatisticsActivity;
@@ -164,8 +165,8 @@ public abstract class BaseActivity extends AppCompatActivity implements Download
     }
 
     protected void navigateToProfile() {
-        startActivity(new Intent(this, MyProfileActivity.class));
-        if (!(this instanceof MyProfileActivity)) {
+        startActivity(new Intent(this, UserDashboardActivity.class));
+        if (!(this instanceof UserDashboardActivity)) {
             finish();
         }
     }

@@ -2,6 +2,8 @@ package com.example.mad_project.sensors;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -25,6 +27,7 @@ public class SensorsController {
     private final StatisticsManager statisticsManager;
     private final StatisticsCalculator statisticsCalculator;
     private final TrackingWorkManager trackingWorkManager;
+    private final Handler mainHandler;
 
     // LiveData for tracking status only
     private final MutableLiveData<Boolean> isTracking = new MutableLiveData<>(false);
@@ -34,6 +37,7 @@ public class SensorsController {
         this.trackingWorkManager = new TrackingWorkManager(context);
         this.statisticsManager = StatisticsManager.getInstance();
         this.statisticsCalculator = StatisticsCalculator.getInstance(context);
+        this.mainHandler = new Handler(Looper.getMainLooper());
 
         initializeSensorHandlers();
     }
@@ -52,6 +56,14 @@ public class SensorsController {
         return instance;
     }
 
+    private void updateTrackingStatus(boolean tracking) {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            isTracking.setValue(tracking);
+        } else {
+            mainHandler.post(() -> isTracking.setValue(tracking));
+        }
+    }
+
     public void startTracking() {
         if (statisticsManager.isSessionActive()) return;
 
@@ -61,7 +73,9 @@ public class SensorsController {
         for (SensorHandler handler : sensorHandlers) {
             handler.startTracking();
         }
-        isTracking.setValue(true);
+
+        updateTrackingStatus(true);
+
     }
 
     public void stopTracking() {
@@ -72,21 +86,21 @@ public class SensorsController {
         statisticsManager.stopSession();
         // Stop statistics calculation
         statisticsCalculator.stopSession();
-        isTracking.setValue(false);
+        updateTrackingStatus(false);
     }
 
     public void pauseTracking() {
         for (SensorHandler handler : sensorHandlers) {
             handler.pauseTracking();
         }
-        isTracking.setValue(false);
+        updateTrackingStatus(false);
     }
 
     public void resumeTracking() {
         for (SensorHandler handler : sensorHandlers) {
             handler.resumeTracking();
         }
-        isTracking.setValue(true);
+        updateTrackingStatus(true);
     }
 
     public void resetAllSensors() {

@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
@@ -29,6 +31,7 @@ public class TrackingWorker extends Worker {
     private static final String CHANNEL_ID = "tracking_service_channel";
     private static final int NOTIFICATION_ID = 1;
     private volatile boolean isRunning = true;
+    private final Handler mainHandler;
 
     private final Context context;
     private final NotificationManager notificationManager;
@@ -41,6 +44,8 @@ public class TrackingWorker extends Worker {
         this.notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         this.sensorsController = SensorsController.getInstance(context);
         this.statisticsManager = StatisticsManager.getInstance();
+        this.mainHandler = new Handler(Looper.getMainLooper());
+
         createNotificationChannel();
     }
 
@@ -166,6 +171,13 @@ public class TrackingWorker extends Worker {
     public void onStopped() {
         super.onStopped();
         isRunning = false;
-        sensorsController.stopTracking();
+        // Use mainHandler to ensure we're on the main thread
+        mainHandler.post(() -> {
+            try {
+                sensorsController.stopTracking();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 }

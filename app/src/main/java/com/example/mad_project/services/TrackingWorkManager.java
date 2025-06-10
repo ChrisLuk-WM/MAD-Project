@@ -3,6 +3,7 @@ package com.example.mad_project.services;
 import android.content.Context;
 import android.os.Build;
 
+import androidx.core.content.ContextCompat;
 import androidx.work.Constraints;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
@@ -46,7 +47,12 @@ public class TrackingWorkManager {
     }
 
     public void stopTracking() {
-        workManager.cancelUniqueWork(TRACKING_WORK_NAME);
+        // Cancel work and wait for completion
+        workManager.cancelUniqueWork(TRACKING_WORK_NAME)
+                .getResult()
+                .addListener(() -> {
+                    // Work has been cancelled
+                }, ContextCompat.getMainExecutor(context));
     }
 
     public boolean isTracking() {

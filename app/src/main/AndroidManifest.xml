@@ -44,7 +44,12 @@
 
         <activity
             android:name=".ui.pages.profile.MyProfileActivity"
-            android:label="My Profile"
+            android:label="Profile"
+            android:parentActivityName=".ui.pages.profile.UserDashboardActivity" />
+
+        <activity
+            android:name=".ui.pages.profile.UserDashboardActivity"
+            android:label="Dashboard"
             android:parentActivityName=".MainActivity" />
 
         <activity

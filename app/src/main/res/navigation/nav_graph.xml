@@ -21,8 +21,8 @@
 
     <activity
         android:id="@+id/profileActivity"
-        android:name="com.example.mad_project.ui.pages.profile.MyProfileActivity"
-        android:label="My Profile" />
+        android:name="com.example.mad_project.ui.pages.profile.UserDashboardActivity"
+        android:label="Dashboard" />
 
     <activity
         android:id="@+id/routePlanningActivity"

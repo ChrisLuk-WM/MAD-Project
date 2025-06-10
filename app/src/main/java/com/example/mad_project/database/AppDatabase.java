@@ -10,12 +10,16 @@ import androidx.room.TypeConverters;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.mad_project.database.converters.LocalDateTimeConverter;
+import com.example.mad_project.database.dao.EmergencyContactDao;
 import com.example.mad_project.database.dao.HikingSessionDao;
 import com.example.mad_project.database.dao.HikingStatisticsDao;
+import com.example.mad_project.database.dao.ProfileDao;
 import com.example.mad_project.database.dao.TrailDao;
 import com.example.mad_project.database.dao.TrailImageDao;
+import com.example.mad_project.database.entities.EmergencyContactEntity;
 import com.example.mad_project.database.entities.HikingSessionEntity;
 import com.example.mad_project.database.entities.HikingStatisticsEntity;
+import com.example.mad_project.database.entities.ProfileEntity;
 import com.example.mad_project.database.entities.TrailEntity;
 import com.example.mad_project.database.entities.TrailImage;
 
@@ -24,7 +28,9 @@ import com.example.mad_project.database.entities.TrailImage;
                 TrailEntity.class,
                 HikingSessionEntity.class,
                 TrailImage.class,
-                HikingStatisticsEntity.class
+                HikingStatisticsEntity.class,
+                ProfileEntity.class,
+                EmergencyContactEntity.class
         },
         version = 1,
         exportSchema = false
@@ -38,6 +44,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract HikingSessionDao hikingSessionDao();
     public abstract TrailImageDao trailImageDao();
     public abstract HikingStatisticsDao hikingStatisticsDao();
+    public abstract ProfileDao profileDao();
+    public abstract EmergencyContactDao emergencyContactDao();
 
     // Database creation callback
     private static final RoomDatabase.Callback roomCallback = new RoomDatabase.Callback() {
