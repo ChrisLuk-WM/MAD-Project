@@ -126,8 +126,8 @@ public class DashboardFragment extends Fragment {
             @Override
             public void run() {
                 updateWeatherInfo();
-                // Schedule next update in 10 minutes
-                handler.postDelayed(this, 10 * 1000);
+                // Schedule next update in 1 minutes
+                handler.postDelayed(this, 1 * 60 * 1000);
             }
         };
 
@@ -229,51 +229,66 @@ public class DashboardFragment extends Fragment {
             List<WeatherWarningUtils.WarningInfo> warningInfos =
                     WeatherWarningUtils.parseWarnings(warnings);
 
-            // Group warnings by severity to determine the color
-            int highestSeverity = warningInfos.stream()
-                    .mapToInt(WeatherWarningUtils.WarningInfo::getSeverity)
-                    .max()
-                    .orElse(1);
+            // Create container for warning icons
+            LinearLayout warningIconsContainer = new LinearLayout(context);
+            warningIconsContainer.setOrientation(LinearLayout.HORIZONTAL);
+            warningIconsContainer.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            ));
+            warningIconsContainer.setPadding(0, dpToPx(context, 4), 0, dpToPx(context, 4));
 
-            // Display original warnings as short titles
-            for (String originalWarning : warnings) {
-                MaterialCardView warningCard = new MaterialCardView(context);
+            // Add warning icons
+            for (WeatherWarningUtils.WarningInfo warning : warningInfos) {
+                // Get clean warning text
+                String warningText = warning.getLevel(); // Get only the first sentence
 
-                // Get color based on highest severity
-                int[] colors = getWarningColors(highestSeverity);
-
-                warningCard.setCardBackgroundColor(colors[0]);
-                warningCard.setStrokeColor(colors[1]);
-                warningCard.setStrokeWidth(2);
-                warningCard.setCardElevation(0);
-                warningCard.setRadius(dpToPx(context, 8));
-
-                LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
+                // Create icon container
+                MaterialCardView iconCard = new MaterialCardView(context);
+                LinearLayout.LayoutParams iconCardParams = new LinearLayout.LayoutParams(
+                        dpToPx(context, 48), // Fixed width
+                        dpToPx(context, 48)  // Fixed height
                 );
-                cardParams.setMargins(0, dpToPx(context, 4), 0, dpToPx(context, 4));
-                warningCard.setLayoutParams(cardParams);
+                iconCardParams.setMargins(
+                        dpToPx(context, 4),
+                        0,
+                        dpToPx(context, 4),
+                        0
+                );
+                iconCard.setLayoutParams(iconCardParams);
+                iconCard.setCardElevation(0);
+                iconCard.setRadius(dpToPx(context, 8));
+                iconCard.setCardBackgroundColor(Color.WHITE);
 
-                TextView warningText = new TextView(context);
-                warningText.setText(originalWarning.split("\\.")[0]); // Get only the first sentence
-                warningText.setTextColor(colors[2]);
-                warningText.setTypeface(warningText.getTypeface(), Typeface.BOLD);
-                warningText.setPadding(
-                        dpToPx(context, 16),
-                        dpToPx(context, 12),
-                        dpToPx(context, 16),
-                        dpToPx(context, 12)
+                // Create and setup ImageView
+                ImageView warningIcon = new ImageView(context);
+                warningIcon.setLayoutParams(new ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                ));
+                warningIcon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                warningIcon.setPadding(
+                        dpToPx(context, 4),
+                        dpToPx(context, 4),
+                        dpToPx(context, 4),
+                        dpToPx(context, 4)
                 );
 
-                warningCard.addView(warningText);
-                warningMessagesContainer.addView(warningCard);
+                // Load warning icon
+                WeatherIconDownloader.WeatherIconInfo iconInfo = iconDownloader.getWarningIcon(warningText);
+                if (iconInfo != null) {
+                    warningIcon.setImageBitmap(iconInfo.getIconBitmap());
+                }
+
+                iconCard.addView(warningIcon);
+                warningIconsContainer.addView(iconCard);
             }
 
-            // Create integrated reminder
+            warningMessagesContainer.addView(warningIconsContainer);
+
+            // Create integrated reminder if there are warnings
             if (!warningInfos.isEmpty()) {
                 MaterialCardView reminderCard = new MaterialCardView(context);
-
                 reminderCard.setCardBackgroundColor(Color.parseColor("#FFEBEE")); // Light red
                 reminderCard.setStrokeColor(Color.parseColor("#EF5350")); // Red
                 reminderCard.setStrokeWidth(2);
@@ -287,6 +302,7 @@ public class DashboardFragment extends Fragment {
                 cardParams.setMargins(0, dpToPx(context, 8), 0, dpToPx(context, 4));
                 reminderCard.setLayoutParams(cardParams);
 
+                // Add reminders
                 LinearLayout reminderContent = new LinearLayout(context);
                 reminderContent.setOrientation(LinearLayout.VERTICAL);
                 reminderContent.setPadding(
@@ -296,13 +312,11 @@ public class DashboardFragment extends Fragment {
                         dpToPx(context, 12)
                 );
 
-                // Title
                 TextView titleText = new TextView(context);
                 titleText.setText("Safety Reminders");
                 titleText.setTypeface(titleText.getTypeface(), Typeface.BOLD);
                 titleText.setTextColor(Color.parseColor("#C62828")); // Dark red
 
-                // Combined reminders
                 TextView reminderText = new TextView(context);
                 StringBuilder reminders = new StringBuilder();
                 for (WeatherWarningUtils.WarningInfo warning : warningInfos) {
@@ -318,6 +332,7 @@ public class DashboardFragment extends Fragment {
                 warningMessagesContainer.addView(reminderCard);
             }
 
+            // Update hiking advice
             String hikingAdvice = WeatherWarningUtils.getHikingAdvice(warningInfos);
             boolean isRecommended = WeatherWarningUtils.isHikingRecommended(warningInfos);
 
@@ -328,19 +343,6 @@ public class DashboardFragment extends Fragment {
                             Color.parseColor("#F44336")   // Red
                     )
             );
-
-// Set the chip's layout parameters to wrap content properly
-            LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-            );
-            chipParams.setMargins(
-                    dpToPx(context, 4),
-                    dpToPx(context, 4),
-                    dpToPx(context, 4),
-                    dpToPx(context, 4)
-            );
-            hikingConditionChip.setLayoutParams(chipParams);
         }
     }
 

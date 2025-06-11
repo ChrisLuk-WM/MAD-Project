@@ -27,95 +27,126 @@ public class WeatherWarningUtils {
         public int getSeverity() { return severity; }
     }
 
-    private static class WarningConfig {
-        final String reminder;
-        final int severity;
+    public static class WarningConfig {
+        public final String reminder;
+        public final int severity;
+        public final String imagePath;
 
-        WarningConfig(String reminder, int severity) {
+        WarningConfig(String reminder, int severity, String imagePath) {
             this.reminder = reminder;
             this.severity = severity;
+            this.imagePath = "warning_icon/" + imagePath + ".gif";
         }
     }
 
     private static final Map<String, WarningConfig> TYPHOON_SIGNALS = new HashMap<String, WarningConfig>() {{
         put("NO. 1", new WarningConfig(
                 "Be prepared. Secure loose objects.",
-                2
+                2,
+                "tc1"
         ));
         put("NO. 3", new WarningConfig(
                 "Strong winds expected. Stay away from shoreline.",
-                3
+                3,
+                "tc3"
         ));
         put("NO. 8", new WarningConfig(
                 "Gale or storm force winds. Stay indoors.",
-                5
+                5,
+                "tc8"
         ));
         put("NO. 9", new WarningConfig(
                 "Severe gale or storm. All outdoor activities dangerous.",
-                5
+                5,
+                "tc9"
         ));
         put("NO. 10", new WarningConfig(
                 "Hurricane force winds. Stay inside and away from windows.",
-                5
+                5,
+                "tc10"
         ));
     }};
 
     private static final Map<String, WarningConfig> RAINSTORM_SIGNALS = new HashMap<String, WarningConfig>() {{
         put("AMBER", new WarningConfig(
                 "Heavy rain. Be prepared for possible road flooding.",
-                4
+                4,
+                "wraina"
         ));
         put("RED", new WarningConfig(
                 "Very heavy rain. Flash floods possible. Avoid water sports.",
-                5
+                5,
+                "wrainr"
         ));
         put("BLACK", new WarningConfig(
                 "Extremely heavy rain. Serious flooding. Stay indoor.",
-                5
+                5,
+                "wrainb"
         ));
     }};
 
     private static final Map<String, WarningConfig> SPECIAL_WARNINGS = new HashMap<String, WarningConfig>() {{
         put("VERY HOT", new WarningConfig(
                 "Stay hydrated, avoid direct sunlight, rest in shade frequently.",
-                2
+                2,
+                "vhot"
         ));
         put("COLD", new WarningConfig(
                 "Wear warm clothes, be aware of hypothermia risk.",
-                1
+                1,
+                "cold"
         ));
         put("FROST", new WarningConfig(
                 "Protect plants, be cautious of slippery surfaces.",
-                1
+                1,
+                "frost"
         ));
         put("STRONG MONSOON", new WarningConfig(
                 "Strong gusty winds. Small boats should stay in port.",
-                1
+                1,
+                "sms"
         ));
         put("FIRE DANGER", new WarningConfig(
                 "High fire risk. No open fires in country parks.",
-                2
+                2,
+                "fire"
         ));
     }};
 
     private static final Map<String, WarningConfig> OTHER_WARNINGS = new HashMap<String, WarningConfig>() {{
         put("THUNDERSTORM", new WarningConfig(
                 "Lightning risk. Stay indoors, avoid open areas.",
-                1
+                1,
+                "ts"
         ));
         put("LANDSLIP", new WarningConfig(
                 "Avoid hillsides and retaining walls.",
-                3
-        ));
-        put("FLOOD", new WarningConfig(
-                "Avoid flood-prone areas and stream courses.",
-                4
+                3,
+                "landslip"
         ));
         put("FLOODING IN THE NORTHERN NEW TERRITORIES", new WarningConfig(
                 "Flooding possible in low-lying areas.",
-                3
+                3,
+                "flood"
         ));
     }};
+
+    private static Map<String, WarningConfig> comblineWarnings(Map<String, WarningConfig>... arrays) {
+        Map<String, WarningConfig> result = new HashMap<>();
+        for (Map<String, WarningConfig> array : arrays) {
+            result.putAll(array);
+        }
+        return result;
+    }
+
+    public static Map<String, WarningConfig> getWarningList() {
+        return comblineWarnings(
+            TYPHOON_SIGNALS,
+            RAINSTORM_SIGNALS,
+            SPECIAL_WARNINGS,
+            OTHER_WARNINGS
+        );
+    };
 
     @NonNull
     public static List<WarningInfo> parseWarnings(List<String> warningMessages) {
@@ -132,7 +163,7 @@ public class WeatherWarningUtils {
                     if (upperMessage.contains(signal.getKey())) {
                         warnings.add(new WarningInfo(
                                 "Tropical Cyclone",
-                                "Signal " + signal.getKey(),
+                                signal.getKey(),
                                 signal.getValue().reminder,
                                 signal.getValue().severity
                         ));
@@ -147,7 +178,7 @@ public class WeatherWarningUtils {
                     if (upperMessage.contains(signal.getKey())) {
                         warnings.add(new WarningInfo(
                                 "Rainstorm",
-                                signal.getKey() + " Signal",
+                                signal.getKey(),
                                 signal.getValue().reminder,
                                 signal.getValue().severity
                         ));

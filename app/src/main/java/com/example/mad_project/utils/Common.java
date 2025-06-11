@@ -54,6 +54,23 @@ public class Common {
         return extension;
     }
 
+    public static String getFileName(String fileUrl) {
+        if (fileUrl == null || fileUrl.isEmpty()) {
+            return null;
+        }
+
+        // Remove query parameters if any
+        String cleanUrl = fileUrl.split("\\?")[0];
+
+        // Get the part after the last slash
+        int lastSlashIndex = cleanUrl.lastIndexOf('/');
+        if (lastSlashIndex != -1 && lastSlashIndex < cleanUrl.length() - 1) {
+            return cleanUrl.substring(lastSlashIndex + 1);
+        }
+
+        return null;
+    }
+
 
     public static float convertToFloat(Object value) {
         if (value == null) return 0.0f;

@@ -1,5 +1,8 @@
 package com.example.mad_project.content_downloader;
 
+import static com.example.mad_project.utils.Common.getFileName;
+import static com.example.mad_project.utils.WeatherWarningUtils.getWarningList;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -8,6 +11,8 @@ import android.util.Log;
 import com.example.mad_project.constants.DownloadError;
 import com.example.mad_project.constants.DownloadState;
 import com.example.mad_project.utils.DownloadManager;
+import com.example.mad_project.utils.WeatherWarningUtils;
+import com.example.mad_project.utils.WeatherWarningUtils.*;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -15,6 +20,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -30,6 +36,9 @@ public class WeatherIconDownloader {
     private final ExecutorService executorService;
     private final DownloadManager downloadManager;
     private DownloadManager.DownloadCallback downloadCallback;
+
+
+    private static final Map<String, WeatherWarningUtils.WarningConfig> WARNING_ICON_NAMES = getWarningList();
 
     public static class WeatherIconInfo {
         private final Bitmap iconBitmap;
@@ -57,6 +66,24 @@ public class WeatherIconDownloader {
             instance = new WeatherIconDownloader(context);
         }
         return instance;
+    }
+
+    public WeatherIconInfo getWarningIcon(String warningText) {
+        // Get the warning config from the utils
+        WeatherWarningUtils.WarningConfig warningConfig = WARNING_ICON_NAMES.get(warningText);
+
+        if (warningConfig != null) {
+            try {
+                // Load bitmap directly from assets using the imagePath from warningConfig
+                Bitmap bitmap = BitmapFactory.decodeStream(context.getAssets().open(warningConfig.imagePath));
+                if (bitmap != null) {
+                    return new WeatherIconInfo(bitmap, warningText);
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Error loading warning icon from assets: " + warningConfig.imagePath, e);
+            }
+        }
+        return null;
     }
 
     private void setupDownloadCallbacks() {
