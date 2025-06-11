@@ -22,6 +22,15 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- District name -->
+            <TextView
+                android:id="@+id/text_district"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textColor="?android:textColorSecondary"
+                android:layout_marginBottom="8dp"/>
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -47,12 +56,6 @@
                         android:layout_height="wrap_content"
                         android:textSize="24sp"
                         android:textStyle="bold"/>
-
-                    <TextView
-                        android:id="@+id/text_weather_condition"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -67,18 +70,35 @@
                         android:layout_height="wrap_content"/>
 
                     <TextView
-                        android:id="@+id/text_wind"
+                        android:id="@+id/text_uv_index"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"/>
                 </LinearLayout>
             </LinearLayout>
 
-            <com.google.android.material.chip.Chip
-                android:id="@+id/chip_hiking_condition"
-                android:layout_width="wrap_content"
+            <!-- Warning Messages Container -->
+            <LinearLayout
+                android:id="@+id/warning_messages_container"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:chipBackgroundColor="#FFFFFF"/>
+                android:orientation="vertical"
+                android:layout_marginTop="8dp">
+
+                <!-- Warning messages will be added here programmatically -->
+            </LinearLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/chip_hiking_condition"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                android:padding="12dp"
+                android:textAlignment="center"
+                android:textColor="@android:color/white"
+                android:clickable="false"
+                android:focusable="false"
+                app:cornerRadius="16dp"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 

@@ -1,7 +1,11 @@
 package com.example.mad_project.api.models;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CurrentWeather {
@@ -146,145 +150,172 @@ public class CurrentWeather {
     }
 
     @SerializedName("rainfall")
+    @Nullable
     private RainfallData rainfall;
 
     @SerializedName("icon")
-    private List<Integer> icon;
+    @NonNull
+    private List<Integer> icon = new ArrayList<>();
 
     @SerializedName("iconUpdateTime")
-    private String iconUpdateTime;
+    @NonNull
+    private String iconUpdateTime = "";
 
     @SerializedName("uvindex")
+    @Nullable
     private UVIndex uvindex;
 
     @SerializedName("temperature")
-    private TemperatureData temperature;
+    @NonNull
+    private TemperatureData temperature = new TemperatureData();
 
     @SerializedName("humidity")
-    private HumidityData humidity;
+    @NonNull
+    private HumidityData humidity = new HumidityData();
 
     @SerializedName("updateTime")
-    private String updateTime;
+    @NonNull
+    private String updateTime = "";
 
     @SerializedName("warningMessage")
+    @Nullable
     private List<String> warningMessage;
 
     @SerializedName("mintempFrom00To09")
+    @Nullable
     private String mintempFrom00To09;
 
     @SerializedName("rainfallFrom00To12")
+    @Nullable
     private String rainfallFrom00To12;
 
     @SerializedName("rainfallLastMonth")
+    @Nullable
     private String rainfallLastMonth;
 
     @SerializedName("rainfallJanuaryToLastMonth")
+    @Nullable
     private String rainfallJanuaryToLastMonth;
 
     @SerializedName("tcmessage")
-    private String tcmessage;
+    @Nullable
+    private List<String> tcmessage;
 
+    // Modify getters to handle nullable fields
+    @Nullable
     public RainfallData getRainfall() {
         return rainfall;
     }
 
-    public void setRainfall(RainfallData rainfall) {
-        this.rainfall = rainfall;
-    }
-
+    @NonNull
     public List<Integer> getIcon() {
-        return icon;
+        return icon != null ? icon : new ArrayList<>();
     }
 
-    public void setIcon(List<Integer> icon) {
-        this.icon = icon;
-    }
-
+    @NonNull
     public String getIconUpdateTime() {
-        return iconUpdateTime;
+        return iconUpdateTime != null ? iconUpdateTime : "";
     }
 
-    public void setIconUpdateTime(String iconUpdateTime) {
-        this.iconUpdateTime = iconUpdateTime;
-    }
-
+    @Nullable
     public UVIndex getUvindex() {
         return uvindex;
     }
 
-    public void setUvindex(UVIndex uvindex) {
-        this.uvindex = uvindex;
-    }
-
+    @NonNull
     public TemperatureData getTemperature() {
-        return temperature;
+        return temperature != null ? temperature : new TemperatureData();
     }
 
-    public void setTemperature(TemperatureData temperature) {
-        this.temperature = temperature;
-    }
-
+    @NonNull
     public HumidityData getHumidity() {
-        return humidity;
+        return humidity != null ? humidity : new HumidityData();
     }
 
-    public void setHumidity(HumidityData humidity) {
-        this.humidity = humidity;
-    }
-
+    @NonNull
     public String getUpdateTime() {
-        return updateTime;
+        return updateTime != null ? updateTime : "";
     }
 
-    public void setUpdateTime(String updateTime) {
-        this.updateTime = updateTime;
-    }
-
+    @Nullable
     public List<String> getWarningMessage() {
         return warningMessage;
     }
 
-    public void setWarningMessage(List<String> warningMessage) {
-        this.warningMessage = warningMessage;
-    }
-
+    @Nullable
     public String getMintempFrom00To09() {
         return mintempFrom00To09;
     }
 
-    public void setMintempFrom00To09(String mintempFrom00To09) {
-        this.mintempFrom00To09 = mintempFrom00To09;
-    }
-
+    @Nullable
     public String getRainfallFrom00To12() {
         return rainfallFrom00To12;
     }
 
-    public void setRainfallFrom00To12(String rainfallFrom00To12) {
-        this.rainfallFrom00To12 = rainfallFrom00To12;
-    }
-
+    @Nullable
     public String getRainfallLastMonth() {
         return rainfallLastMonth;
     }
 
-    public void setRainfallLastMonth(String rainfallLastMonth) {
-        this.rainfallLastMonth = rainfallLastMonth;
-    }
-
+    @Nullable
     public String getRainfallJanuaryToLastMonth() {
         return rainfallJanuaryToLastMonth;
     }
 
-    public void setRainfallJanuaryToLastMonth(String rainfallJanuaryToLastMonth) {
-        this.rainfallJanuaryToLastMonth = rainfallJanuaryToLastMonth;
-    }
-
-    public String getTcmessage() {
+    @Nullable
+    public List<String> getTcmessage() {
         return tcmessage;
     }
 
-    public void setTcmessage(String tcmessage) {
+    public void setWarningMessage(@Nullable List<String> warningMessage) {
+        this.warningMessage = warningMessage;
+    }
+
+    public void setRainfall(@Nullable RainfallData rainfall) {
+        this.rainfall = rainfall;
+    }
+
+    public void setIcon(@NonNull List<Integer> icon) {
+        this.icon = icon;
+    }
+
+    public void setIconUpdateTime(@NonNull String iconUpdateTime) {
+        this.iconUpdateTime = iconUpdateTime;
+    }
+
+    public void setUvindex(@Nullable UVIndex uvindex) {
+        this.uvindex = uvindex;
+    }
+
+    public void setTemperature(@NonNull TemperatureData temperature) {
+        this.temperature = temperature;
+    }
+
+    public void setHumidity(@NonNull HumidityData humidity) {
+        this.humidity = humidity;
+    }
+
+    public void setUpdateTime(@NonNull String updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public void setMintempFrom00To09(@Nullable String mintempFrom00To09) {
+        this.mintempFrom00To09 = mintempFrom00To09;
+    }
+
+    public void setRainfallFrom00To12(@Nullable String rainfallFrom00To12) {
+        this.rainfallFrom00To12 = rainfallFrom00To12;
+    }
+
+    public void setRainfallLastMonth(@Nullable String rainfallLastMonth) {
+        this.rainfallLastMonth = rainfallLastMonth;
+    }
+
+    public void setRainfallJanuaryToLastMonth(@Nullable String rainfallJanuaryToLastMonth) {
+        this.rainfallJanuaryToLastMonth = rainfallJanuaryToLastMonth;
+    }
+
+    public void setTcmessage(@Nullable List<String> tcmessage) {
         this.tcmessage = tcmessage;
     }
 }

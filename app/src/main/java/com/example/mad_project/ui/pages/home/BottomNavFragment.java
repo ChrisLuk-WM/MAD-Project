@@ -1,31 +1,27 @@
 package com.example.mad_project.ui.pages.home;
 
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.ActionBarDrawerToggle;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
-import com.example.mad_project.ui.BaseActivity;
-import com.google.android.material.card.MaterialCardView;
 import com.example.mad_project.R;
 
 public class BottomNavFragment extends Fragment {
-    private MaterialCardView cardProfile;
-    private MaterialCardView cardRoute;
-    private MaterialCardView cardStatistics;
+    private LinearLayout cardProfile;
+    private LinearLayout cardRoute;
+    private LinearLayout cardStatistics;
     private NavController navController;
+    private View currentSelectedView;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -46,50 +42,70 @@ public class BottomNavFragment extends Fragment {
         cardRoute = view.findViewById(R.id.card_route);
         cardStatistics = view.findViewById(R.id.card_statistics);
 
-        // Add animations to cards
-        if (cardProfile != null) addCardAnimations(cardProfile);
-        if (cardRoute != null) addCardAnimations(cardRoute);
-        if (cardStatistics != null) addCardAnimations(cardStatistics);
+        // Add animations to buttons
+        if (cardProfile != null) addButtonAnimations(cardProfile);
+        if (cardRoute != null) addButtonAnimations(cardRoute);
+        if (cardStatistics != null) addButtonAnimations(cardStatistics);
     }
 
     private void setupClickListeners() {
         cardProfile.setOnClickListener(v -> {
-            cardProfile.setPressed(true);
+            animatePress(cardProfile);
             navController.navigate(R.id.action_home_to_profile);
         });
 
         cardRoute.setOnClickListener(v -> {
-            cardRoute.setPressed(true);
+            animatePress(cardRoute);
             navController.navigate(R.id.action_home_to_route);
         });
 
         cardStatistics.setOnClickListener(v -> {
-            cardStatistics.setPressed(true);
+            animatePress(cardStatistics);
             navController.navigate(R.id.action_home_to_statistics);
         });
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private void addCardAnimations(MaterialCardView card) {
-        card.setOnTouchListener((v, event) -> {
+    private void addButtonAnimations(View button) {
+        button.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    card.animate()
-                            .scaleX(0.95f)
-                            .scaleY(0.95f)
+                    ObjectAnimator.ofFloat(v, "alpha", 1f, 0.7f)
                             .setDuration(100)
                             .start();
                     break;
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    card.animate()
-                            .scaleX(1f)
-                            .scaleY(1f)
+                    ObjectAnimator.ofFloat(v, "alpha", 0.7f, 1f)
                             .setDuration(100)
                             .start();
                     break;
             }
             return false;
         });
+    }
+
+    private void animatePress(View view) {
+        // Reset previous selection if exists
+        if (currentSelectedView != null) {
+            currentSelectedView.setAlpha(1f);
+        }
+
+        // Animate new selection
+        ObjectAnimator.ofFloat(view, "alpha", 1f, 0.7f)
+                .setDuration(100)
+                .start();
+
+        currentSelectedView = view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Reset any active selections
+        if (currentSelectedView != null) {
+            currentSelectedView.setAlpha(1f);
+            currentSelectedView = null;
+        }
     }
 }

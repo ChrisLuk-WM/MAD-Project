@@ -81,4 +81,10 @@ public class Common {
         if (value instanceof Float) return ((Float) value).intValue();
         return 0;
     }
+
+
+    public static int dpToPx(Context context, int dp) {
+        float density = context.getResources().getDisplayMetrics().density;
+        return Math.round(dp * density);
+    }
 }

@@ -1,8 +1,17 @@
 package com.example.mad_project.api;
 
+import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
+
 import com.example.mad_project.api.models.*;
+import com.example.mad_project.database.AppDatabase;
+import com.example.mad_project.database.dao.WeatherHistoryDao;
+import com.example.mad_project.database.entities.WeatherHistoryEntity;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -10,10 +19,12 @@ import retrofit2.Response;
 
 public class WeatherRepository {
     private final WeatherApiService apiService;
+    private final WeatherHistoryDao weatherHistoryDao;
     private static final String LANG_EN = "en";
 
-    public WeatherRepository() {
+    public WeatherRepository(Context context) {
         this.apiService = WeatherApiClient.getInstance().getService();
+        this.weatherHistoryDao = AppDatabase.getDatabase(context).weatherHistoryDao();
     }
 
     // Weather Information API Methods
@@ -173,6 +184,9 @@ public class WeatherRepository {
     // Helper method to handle responses
     private <T> void handleResponse(Response<T> response, WeatherCallback<T> callback) {
         if (response.isSuccessful() && response.body() != null) {
+            if (response.body() instanceof CurrentWeather) {
+                saveWeatherToDatabase((CurrentWeather) response.body());
+            }
             callback.onSuccess(response.body());
         } else {
             String errorMsg = "Error: ";
@@ -187,6 +201,72 @@ public class WeatherRepository {
             }
             callback.onError(errorMsg);
         }
+    }
+
+    private void saveWeatherToDatabase(CurrentWeather weather) {
+        new Thread(() -> {
+            WeatherHistoryEntity entity = new WeatherHistoryEntity();
+            entity.setUpdateTime(weather.getUpdateTime());
+            entity.setIcon(weather.getIcon());
+            entity.setIconUpdateTime(weather.getIconUpdateTime());
+
+            // Temperature
+            if (weather.getTemperature() != null && !weather.getTemperature().getData().isEmpty()) {
+                CurrentWeather.TemperatureRecord hkoTemp = weather.getTemperature().getData().stream()
+                        .filter(t -> t.getPlace().equals("Hong Kong Observatory"))
+                        .findFirst()
+                        .orElse(weather.getTemperature().getData().get(0));
+
+                entity.setTemperature(hkoTemp.getValue());
+                entity.setTemperatureUnit(hkoTemp.getUnit());
+                entity.setTemperatureRecordTime(weather.getTemperature().getRecordTime());
+            }
+
+            // Humidity
+            if (weather.getHumidity() != null && !weather.getHumidity().getData().isEmpty()) {
+                CurrentWeather.HumidityRecord humidityRecord = weather.getHumidity().getData().get(0);
+                entity.setHumidity(humidityRecord.getValue());
+                entity.setHumidityUnit(humidityRecord.getUnit());
+                entity.setHumidityRecordTime(weather.getHumidity().getRecordTime());
+            }
+
+            // Rainfall
+            if (weather.getRainfall() != null && weather.getRainfall().getData() != null) {
+                Map<String, Double> rainfallMap = new HashMap<>();
+                for (CurrentWeather.RainfallRecord record : weather.getRainfall().getData()) {
+                    rainfallMap.put(record.getPlace(), record.getMax().doubleValue());
+                }
+                entity.setRainfallData(rainfallMap);
+                entity.setRainfallUnit(weather.getRainfall().getData().get(0).getUnit());
+                entity.setRainfallStartTime(weather.getRainfall().getStartTime());
+                entity.setRainfallEndTime(weather.getRainfall().getEndTime());
+            }
+
+            entity.setWarningMessages(weather.getWarningMessage());
+
+            // UV index
+            if (weather.getUvindex() != null && !weather.getUvindex().getData().isEmpty()) {
+                CurrentWeather.UVIndexRecord uvRecord = weather.getUvindex().getData().get(0);
+                entity.setUvIndexValue(String.valueOf(uvRecord.getValue()));
+                entity.setUvIndexDesc(uvRecord.getDesc());
+            }
+
+            weatherHistoryDao.insert(entity);
+            weatherHistoryDao.deleteOldRecords(); // Keep database size managed
+        }).start();
+    }
+
+    public void getLatestWeather(WeatherCallback<WeatherHistoryEntity> callback) {
+        new Thread(() -> {
+            WeatherHistoryEntity latestWeather = weatherHistoryDao.getLatestWeather();
+            new Handler(Looper.getMainLooper()).post(() -> {
+                if (latestWeather != null) {
+                    callback.onSuccess(latestWeather);
+                } else {
+                    callback.onError("No weather data available");
+                }
+            });
+        }).start();
     }
 
     // Callback interface

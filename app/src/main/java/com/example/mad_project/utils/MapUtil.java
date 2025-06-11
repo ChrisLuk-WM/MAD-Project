@@ -1,5 +1,7 @@
 package com.example.mad_project.utils;
 
+import static com.example.mad_project.utils.Common.dpToPx;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -56,10 +58,5 @@ public class MapUtil {
         // Center the placeholder icon
         mapView.setScaleType(ImageView.ScaleType.CENTER);
         mapView.setImageDrawable(placeholderIcon.getDrawable());
-    }
-
-    private static int dpToPx(Context context, int dp) {
-        float density = context.getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
     }
 }

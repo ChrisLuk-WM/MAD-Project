@@ -35,7 +35,6 @@ public class MainActivity extends BaseActivity {
     private HikingTrailImageDownloader imageDownloader;
     private NavController navController;
     private SensorsController sensorsController;
-    private StatisticsManager statisticsManager;
 
 
     // Core component initialization and signal handling
@@ -45,7 +44,6 @@ public class MainActivity extends BaseActivity {
         imageDownloader = new HikingTrailImageDownloader(this);
 
         DownloadManager.getInstance(this);
-        statisticsManager = StatisticsManager.getInstance();
         sensorsController = SensorsController.getInstance(this);
 
     }
@@ -53,6 +51,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        StatisticsManager.init(getApplicationContext());
         onCheckRequestPermissions();
 
         Toolbar toolbar = findViewById(R.id.toolbar_layout);
@@ -176,7 +175,7 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (statisticsManager != null && statisticsManager.isSessionActive()) {
+        if (StatisticsManager.getInstance().isSessionActive()) {
             // Ensure services are running
             sensorsController.startTracking();
         }
