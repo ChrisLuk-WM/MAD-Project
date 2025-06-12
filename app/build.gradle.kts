@@ -83,4 +83,14 @@ dependencies {
     implementation(libs.androidx.navigation.fragment)
 
     implementation(libs.androidx.work.runtime)
+
+    implementation(libs.tensorflow.lite)
+    implementation(libs.tensorflow.lite.support)
+
+    // Optional: GPU support
+    implementation(libs.tensorflow.lite.gpu)
+    implementation(libs.tensorflow.lite.gpu.delegate.plugin)
+
+    // Optional: Metal delegate for newer Android devices
+    implementation(libs.tensorflow.lite.gpu.delegate.plugin)
 }

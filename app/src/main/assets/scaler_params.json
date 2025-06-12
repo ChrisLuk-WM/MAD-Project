@@ -1,0 +1,34 @@
+{
+  "description": "StandardScaler parameters for hiker statistics normalization",
+  "mean": [
+    45.160666666666664,
+    75.54266666666666,
+    169.35033333333334,
+    4.959333333333333,
+    7.308333333333334,
+    6.5713333333333335,
+    1651.1826666666666,
+    14.678666666666667
+  ],
+  "scale": [
+    14.879186342748122,
+    14.705945947888637,
+    9.712857452309741,
+    2.7482745293891018,
+    7.245729585226199,
+    5.551118045543218,
+    1330.6334298494417,
+    13.561369580130501
+  ],
+  "feature_names": [
+    "age",
+    "weight",
+    "height",
+    "fitness_level",
+    "experience_years",
+    "weekly_exercise_hours",
+    "max_altitude_climbed",
+    "longest_hike_km"
+  ],
+  "normalization_formula": "(value - mean) / scale"
+}

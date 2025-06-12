@@ -15,7 +15,6 @@
             android:id="@+id/toolbar_layout"
             layout="@layout/layout_toolbar" />
 
-
         <ProgressBar
             android:id="@+id/loading_indicator"
             android:layout_width="wrap_content"
@@ -46,59 +45,13 @@
                 android:layout_height="24dp"
                 android:background="@drawable/drag_handle_background"/>
 
-            <androidx.core.widget.NestedScrollView
-                android:id="@+id/details_container"
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/planning_container"
+                android:name="com.example.mad_project.ui.pages.route.RoutePlanningFragment"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="0.22">
+                android:layout_weight="0.22"/>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/route_name"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textSize="20sp"
-                        android:textStyle="bold"
-                        android:layout_marginBottom="16dp"/>
-
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Personalized Suggestions"
-                                android:textStyle="bold"
-                                android:layout_marginBottom="8dp"/>
-
-                            <TextView
-                                android:id="@+id/suggestions"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"/>
-                        </LinearLayout>
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <Button
-                        android:id="@+id/btn_start_hiking"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Start Hiking"
-                        android:layout_marginTop="8dp"/>
-                </LinearLayout>
-            </androidx.core.widget.NestedScrollView>
         </com.example.mad_project.ui.views.DraggableContainer>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.drawerlayout.widget.DrawerLayout>

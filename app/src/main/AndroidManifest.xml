@@ -20,6 +20,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
+    <uses-feature android:name="android.hardware.opengles.egl" android:required="false"/>
+    <uses-feature android:name="android.hardware.opengles.version" android:required="false"/>
 
     <application
         android:allowBackup="true"
@@ -29,6 +31,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:largeHeap="true"
+        android:hardwareAccelerated="true"
         android:theme="@style/Theme.MAD_Project"
         tools:targetApi="31">
 

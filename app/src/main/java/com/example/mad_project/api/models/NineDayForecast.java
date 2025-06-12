@@ -1,10 +1,28 @@
 package com.example.mad_project.api.models;
 
 import com.google.gson.annotations.SerializedName;
+import androidx.annotation.Nullable;
 
 import java.util.List;
 
 public class NineDayForecast {
+    @SerializedName("generalSituation")
+    private String generalSituation;
+
+    @SerializedName("updateTime")
+    private String updateTime;
+
+    @SerializedName("weatherForecast")
+    private List<ForecastDay> weatherForecast;
+
+    @Nullable
+    @SerializedName("seaTemp")
+    private SeaTemp seaTemp;
+
+    @Nullable
+    @SerializedName("soilTemp")
+    private List<SoilTemp> soilTemp;
+
     public static class ForecastDay {
         @SerializedName("forecastDate")
         private String forecastDate;
@@ -13,10 +31,10 @@ public class NineDayForecast {
         private String forecastWeather;
 
         @SerializedName("forecastMaxtemp")
-        private Integer forecastMaxTemp;
+        private Temperature forecastMaxTemp;
 
         @SerializedName("forecastMintemp")
-        private Integer forecastMinTemp;
+        private Temperature forecastMinTemp;
 
         @SerializedName("week")
         private String week;
@@ -25,10 +43,10 @@ public class NineDayForecast {
         private String forecastWind;
 
         @SerializedName("forecastMaxrh")
-        private Integer forecastMaxRh;
+        private Humidity forecastMaxRh;
 
         @SerializedName("forecastMinrh")
-        private Integer forecastMinRh;
+        private Humidity forecastMinRh;
 
         @SerializedName("ForecastIcon")
         private Integer forecastIcon;
@@ -36,95 +54,188 @@ public class NineDayForecast {
         @SerializedName("PSR")
         private String psr;
 
-        public String getForecastWind() {
-            return forecastWind;
+        // Nested temperature class
+        public static class Temperature {
+            @SerializedName("value")
+            private Integer value;
+
+            @SerializedName("unit")
+            private String unit;
+
+            public Integer getValue() {
+                return value;
+            }
+
+            public String getUnit() {
+                return unit;
+            }
         }
 
-        public void setForecastWind(String forecastWind) {
-            this.forecastWind = forecastWind;
+        // Nested humidity class
+        public static class Humidity {
+            @SerializedName("value")
+            private Integer value;
+
+            @SerializedName("unit")
+            private String unit;
+
+            public Integer getValue() {
+                return value;
+            }
+
+            public String getUnit() {
+                return unit;
+            }
         }
 
+        // Update getters to return new types
+        public Temperature getForecastMaxTemp() {
+            return forecastMaxTemp;
+        }
+
+        public Temperature getForecastMinTemp() {
+            return forecastMinTemp;
+        }
+
+        public Humidity getForecastMaxRh() {
+            return forecastMaxRh;
+        }
+
+        public Humidity getForecastMinRh() {
+            return forecastMinRh;
+        }
+
+        // Rest of the getters remain the same
         public String getForecastDate() {
             return forecastDate;
-        }
-
-        public void setForecastDate(String forecastDate) {
-            this.forecastDate = forecastDate;
         }
 
         public String getForecastWeather() {
             return forecastWeather;
         }
 
-        public void setForecastWeather(String forecastWeather) {
-            this.forecastWeather = forecastWeather;
-        }
-
-        public Integer getForecastMaxTemp() {
-            return forecastMaxTemp;
-        }
-
-        public void setForecastMaxTemp(Integer forecastMaxTemp) {
-            this.forecastMaxTemp = forecastMaxTemp;
-        }
-
-        public Integer getForecastMinTemp() {
-            return forecastMinTemp;
-        }
-
-        public void setForecastMinTemp(Integer forecastMinTemp) {
-            this.forecastMinTemp = forecastMinTemp;
-        }
-
         public String getWeek() {
             return week;
         }
 
-        public void setWeek(String week) {
-            this.week = week;
-        }
-
-        public Integer getForecastMaxRh() {
-            return forecastMaxRh;
-        }
-
-        public void setForecastMaxRh(Integer forecastMaxRh) {
-            this.forecastMaxRh = forecastMaxRh;
-        }
-
-        public Integer getForecastMinRh() {
-            return forecastMinRh;
-        }
-
-        public void setForecastMinRh(Integer forecastMinRh) {
-            this.forecastMinRh = forecastMinRh;
+        public String getForecastWind() {
+            return forecastWind;
         }
 
         public Integer getForecastIcon() {
             return forecastIcon;
         }
 
-        public void setForecastIcon(Integer forecastIcon) {
-            this.forecastIcon = forecastIcon;
-        }
-
         public String getPsr() {
             return psr;
         }
+    }
 
-        public void setPsr(String psr) {
-            this.psr = psr;
+    // New classes for sea temperature
+    public static class SeaTemp {
+        @SerializedName("place")
+        private String place;
+
+        @SerializedName("value")
+        private Integer value;
+
+        @SerializedName("unit")
+        private String unit;
+
+        @SerializedName("recordTime")
+        private String recordTime;
+
+        public String getPlace() {
+            return place;
+        }
+
+        public Integer getValue() {
+            return value;
+        }
+
+        public String getUnit() {
+            return unit;
+        }
+
+        public String getRecordTime() {
+            return recordTime;
         }
     }
 
-    @SerializedName("weatherForecast")
-    private List<ForecastDay> weatherForecast;
+    // New classes for soil temperature
+    public static class SoilTemp {
+        @SerializedName("place")
+        private String place;
+
+        @SerializedName("value")
+        private Double value;
+
+        @SerializedName("unit")
+        private String unit;
+
+        @SerializedName("recordTime")
+        private String recordTime;
+
+        @SerializedName("depth")
+        private Depth depth;
+
+        public static class Depth {
+            @SerializedName("unit")
+            private String unit;
+
+            @SerializedName("value")
+            private Double value;
+
+            public String getUnit() {
+                return unit;
+            }
+
+            public Double getValue() {
+                return value;
+            }
+        }
+
+        public String getPlace() {
+            return place;
+        }
+
+        public Double getValue() {
+            return value;
+        }
+
+        public String getUnit() {
+            return unit;
+        }
+
+        public String getRecordTime() {
+            return recordTime;
+        }
+
+        public Depth getDepth() {
+            return depth;
+        }
+    }
+
+    // Getters for top-level fields
+    public String getGeneralSituation() {
+        return generalSituation;
+    }
+
+    public String getUpdateTime() {
+        return updateTime;
+    }
 
     public List<ForecastDay> getWeatherForecast() {
         return weatherForecast;
     }
 
-    public void setWeatherForecast(List<ForecastDay> weatherForecast) {
-        this.weatherForecast = weatherForecast;
+    @Nullable
+    public SeaTemp getSeaTemp() {
+        return seaTemp;
+    }
+
+    @Nullable
+    public List<SoilTemp> getSoilTemp() {
+        return soilTemp;
     }
 }

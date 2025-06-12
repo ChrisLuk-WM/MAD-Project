@@ -26,15 +26,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class RouteDetailsActivity extends BaseActivity {
-    private ViewPager2 imagePager;
     private RouteImageAdapter imageAdapter;
-    private TextView routeName;
-    private TextView routeDifficulty;
-    private TextView routeLength;
-    private TextView routeDuration;
-    private TextView routeSight;
-    private TextView suggestions;
-    private Button btnStartHiking;
     private long trailId;
     private RouteDetailsViewModel viewModel;
 
@@ -57,6 +49,13 @@ public class RouteDetailsActivity extends BaseActivity {
                 .get(RouteDetailsViewModel.class);
 
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState == null) {
+            // Add the planning fragment
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.planning_container, RoutePlanningFragment.newInstance(trailId))
+                    .commit();
+        }
     }
 
     @Override
@@ -66,14 +65,6 @@ public class RouteDetailsActivity extends BaseActivity {
 
     @Override
     protected void initViews() {
-        // Find views from the new layout structure
-        routeName = findViewById(R.id.route_name);
-
-        // Statistics views are now found in updateUI
-        // as they're part of the dynamic content
-
-        btnStartHiking = findViewById(R.id.btn_start_hiking);
-
         // Initialize gallery adapter
         imageAdapter = new RouteImageAdapter(this::showFullScreenImage);
 
@@ -109,8 +100,6 @@ public class RouteDetailsActivity extends BaseActivity {
                 showError();
             }
         });
-
-        btnStartHiking.setOnClickListener(v -> startHiking());
     }
 
     private void showLoading(boolean isLoading) {
@@ -119,17 +108,19 @@ public class RouteDetailsActivity extends BaseActivity {
             loadingIndicator.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         }
 
-        // Disable UI elements during loading
-        if (isLoading) {
-            routeName.setText("Loading...");
-            btnStartHiking.setEnabled(false);
+        // Remove reference to routeName.setText()
+        // Instead, show/hide content containers
+        View detailsHeader = findViewById(R.id.route_details_header);
+        View planningContainer = findViewById(R.id.planning_container);
 
+        if (isLoading) {
             // Hide content during loading
-            findViewById(R.id.route_map).setVisibility(View.INVISIBLE);
-            findViewById(R.id.gallery_pager).setVisibility(View.INVISIBLE);
+            if (detailsHeader != null) detailsHeader.setVisibility(View.INVISIBLE);
+            if (planningContainer != null) planningContainer.setVisibility(View.INVISIBLE);
         } else {
-            findViewById(R.id.route_map).setVisibility(View.VISIBLE);
-            findViewById(R.id.gallery_pager).setVisibility(View.VISIBLE);
+            // Show content after loading
+            if (detailsHeader != null) detailsHeader.setVisibility(View.VISIBLE);
+            if (planningContainer != null) planningContainer.setVisibility(View.VISIBLE);
         }
     }
 
@@ -149,12 +140,14 @@ public class RouteDetailsActivity extends BaseActivity {
             TrailEntity trail = trailWithImages.getTrail();
             List<TrailImage> galleryImages = trailWithImages.getGalleryImages();
 
-            // Update route name at the top
-            routeName.setText(trail.getTrailName());
+            // Remove reference to routeName.setText()
+            // This is now handled in the fragment
 
             // Load map
             ImageView mapView = findViewById(R.id.route_map);
-            MapUtil.loadRouteMap(mapView, trail.getImagePath(), this);
+            if (mapView != null) {
+                MapUtil.loadRouteMap(mapView, trail.getImagePath(), this);
+            }
 
             // Update statistics in the upper part (below map)
             TextView difficultyValue = findViewById(R.id.difficulty_value);
@@ -162,10 +155,10 @@ public class RouteDetailsActivity extends BaseActivity {
             TextView durationValue = findViewById(R.id.duration_value);
             TextView sightValue = findViewById(R.id.sight_value);
 
-            difficultyValue.setText(String.format(Locale.getDefault(), "%.1f", trail.getDifficultyRating()));
-            lengthValue.setText(String.format(Locale.getDefault(), "%.1f km", trail.getLengthRating()));
-            durationValue.setText(String.format(Locale.getDefault(), "%.1f h", trail.getDurationRating()));
-            sightValue.setText(String.format(Locale.getDefault(), "%.1f", trail.getSightRating()));
+            if (difficultyValue != null) difficultyValue.setText(String.format(Locale.getDefault(), "%.1f", trail.getDifficultyRating()));
+            if (lengthValue != null) lengthValue.setText(String.format(Locale.getDefault(), "%.1f km", trail.getLengthRating()));
+            if (durationValue != null) durationValue.setText(String.format(Locale.getDefault(), "%.1f h", trail.getDurationRating()));
+            if (sightValue != null) sightValue.setText(String.format(Locale.getDefault(), "%.1f", trail.getSightRating()));
 
             // Update gallery
             ViewPager2 galleryPager = findViewById(R.id.gallery_pager);
@@ -184,14 +177,6 @@ public class RouteDetailsActivity extends BaseActivity {
                 }
                 imageAdapter.setImages(galleryImages);
             }
-
-            // Update suggestions in lower part
-            if (suggestions != null) {
-                suggestions.setText(viewModel.getPersonalizedSuggestions());
-            }
-
-            // Enable start hiking button
-            btnStartHiking.setEnabled(true);
 
         } catch (Exception e) {
             e.printStackTrace();
