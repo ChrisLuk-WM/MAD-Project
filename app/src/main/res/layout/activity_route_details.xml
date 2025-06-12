@@ -47,7 +47,7 @@
 
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/planning_container"
-                android:name="com.example.mad_project.ui.pages.route.RoutePlanningFragment"
+                android:name="com.example.mad_project.ui.pages.route.planning.RoutePlanningFragment"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
                 android:layout_weight="0.22"/>

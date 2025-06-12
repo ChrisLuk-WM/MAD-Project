@@ -2,4 +2,5 @@
 <resources>
     <dimen name="drag_handle_height">24dp</dimen>
     <dimen name="card_corner_radius">8dp</dimen>
+    <dimen name="card_selected_stroke_width">2dp</dimen>
 </resources>

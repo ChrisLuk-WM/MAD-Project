@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
@@ -17,19 +16,14 @@ import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.example.mad_project.MainActivity;
-import com.example.mad_project.constants.DownloadError;
 import com.example.mad_project.content_downloader.DownloadStateListener;
 import com.example.mad_project.content_downloader.HikingTrailImageDownloader;
-import com.example.mad_project.ui.pages.profile.MyProfileActivity;
 import com.example.mad_project.ui.pages.profile.UserDashboardActivity;
 import com.example.mad_project.ui.pages.route.RouteDetailsActivity;
-import com.example.mad_project.ui.pages.route.RoutePlanningActivity;
+import com.example.mad_project.ui.pages.route.planning.RoutePlanningActivity;
 import com.example.mad_project.ui.pages.statistics.StatisticsActivity;
-import com.example.mad_project.utils.DownloadManager;
 import com.google.android.material.navigation.NavigationView;
 import com.example.mad_project.R;
-
-import java.io.File;
 
 public abstract class BaseActivity extends AppCompatActivity implements DownloadStateListener {
     protected Toolbar toolbar;

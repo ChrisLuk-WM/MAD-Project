@@ -26,7 +26,7 @@
 
     <activity
         android:id="@+id/routePlanningActivity"
-        android:name="com.example.mad_project.ui.pages.route.RoutePlanningActivity"
+        android:name="com.example.mad_project.ui.pages.route.planning.RoutePlanningActivity"
         android:label="Route Planning" />
 
     <activity

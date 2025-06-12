@@ -1,4 +1,4 @@
-package com.example.mad_project.ui.pages.route;
+package com.example.mad_project.ui.pages.route.planning;
 
 import android.app.Application;
 import androidx.annotation.NonNull;
@@ -18,6 +18,7 @@ import java.util.concurrent.Executors;
 import com.example.mad_project.database.AppDatabase;
 import com.example.mad_project.database.entities.TrailEntity;
 import com.example.mad_project.database.entities.TrailImage;
+import com.example.mad_project.ui.pages.route.TrailWithImages;
 
 public class RoutePlanningViewModel extends AndroidViewModel {  // Change to AndroidViewModel
     private final AppDatabase database;

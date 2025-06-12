@@ -1,4 +1,4 @@
-package com.example.mad_project.ui.pages.route;
+package com.example.mad_project.ui.pages.route.planning;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -16,20 +16,20 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.mad_project.R;
-import com.example.mad_project.database.AppDatabase;
 import com.example.mad_project.database.entities.TrailEntity;
 import com.example.mad_project.sensors.SensorsController;
 import com.example.mad_project.statistics.StatisticsCalculator;
 import com.example.mad_project.ui.BaseActivity;
+import com.example.mad_project.ui.pages.route.RouteAdapter;
+import com.example.mad_project.ui.pages.route.RouteDetailsActivity;
+import com.example.mad_project.ui.pages.route.TrailWithImages;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.textfield.TextInputEditText;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;

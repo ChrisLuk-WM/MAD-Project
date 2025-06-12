@@ -16,4 +16,19 @@
     <color name="progress_indicator">#6200EE</color>
     <color name="text_primary">#000000</color>
     <color name="text_secondary">#757575</color>
+
+    <!-- Recommendation status colors -->
+    <color name="recommendation_safe">#FF4CAF50</color>     <!-- Material Green 500 -->
+    <color name="recommendation_caution">#FFFFC107</color>  <!-- Material Amber 500 -->
+    <color name="recommendation_unsafe">#FFF44336</color>   <!-- Material Red 500 -->
+
+    <!-- Lighter variants for backgrounds -->
+    <color name="recommendation_safe_light">#FFE8F5E9</color>     <!-- Material Green 50 -->
+    <color name="recommendation_caution_light">#FFFFF8E1</color>  <!-- Material Amber 50 -->
+    <color name="recommendation_unsafe_light">#FFFFEBEE</color>   <!-- Material Red 50 -->
+
+    <!-- Darker variants for pressed states -->
+    <color name="recommendation_safe_dark">#FF388E3C</color>     <!-- Material Green 700 -->
+    <color name="recommendation_caution_dark">#FFFFA000</color>  <!-- Material Amber 700 -->
+    <color name="recommendation_unsafe_dark">#FFD32F2F</color>   <!-- Material Red 700 -->
 </resources>

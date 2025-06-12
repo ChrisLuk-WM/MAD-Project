@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -19,6 +18,7 @@ import com.example.mad_project.R;
 import com.example.mad_project.database.entities.TrailEntity;
 import com.example.mad_project.database.entities.TrailImage;
 import com.example.mad_project.ui.BaseActivity;
+import com.example.mad_project.ui.pages.route.planning.RoutePlanningFragment;
 import com.example.mad_project.utils.MapUtil;
 
 import java.io.File;

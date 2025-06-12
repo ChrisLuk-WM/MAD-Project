@@ -61,14 +61,14 @@
             android:parentActivityName=".MainActivity" />
 
         <activity
-            android:name=".ui.pages.route.RoutePlanningActivity"
+            android:name=".ui.pages.route.planning.RoutePlanningActivity"
             android:label="Route Planning"
             android:parentActivityName=".MainActivity" />
 
         <activity
             android:name=".ui.pages.route.RouteDetailsActivity"
             android:label="Route Detail"
-            android:parentActivityName=".ui.pages.route.RoutePlanningActivity" />
+            android:parentActivityName=".ui.pages.route.planning.RoutePlanningActivity" />
 
         <activity
             android:name=".ui.pages.statistics.StatisticsActivity"
