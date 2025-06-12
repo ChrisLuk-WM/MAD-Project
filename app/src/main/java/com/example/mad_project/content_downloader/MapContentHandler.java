@@ -10,6 +10,10 @@ import com.example.mad_project.database.entities.TrailEntity;
 import com.example.mad_project.database.entities.TrailImage;
 import com.example.mad_project.utils.DownloadManager;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
 import java.io.File;
 
 public class MapContentHandler {
@@ -95,6 +99,30 @@ public class MapContentHandler {
             // Construct the static map URL
             String staticMapUrl = "https://static.trailwatch.hk/static/?aid=" + trailwatchId;
 
+//            Document doc = Jsoup.connect(staticMapUrl).get();
+//
+//            // Extract coordinates from the infoDistance div
+//            Element infoDistanceDiv = doc.select("div[id=infoDistance]").first();
+//            if (infoDistanceDiv != null) {
+//                String lat = infoDistanceDiv.attr("lat");
+//                String lon = infoDistanceDiv.attr("lon");
+//
+//                if (!lat.isEmpty() && !lon.isEmpty()) {
+//                    try {
+//                        double latitude = Double.parseDouble(lat);
+//                        double longitude = Double.parseDouble(lon);
+//
+//                        // Update trail coordinates
+//                        trail.setLatitude(latitude);
+//                        trail.setLongitude(longitude);
+//                        database.trailDao().update(trail);
+//
+//                    } catch (NumberFormatException e) {
+//                        // Log.e(TAG, "Error parsing coordinates: " + e.getMessage());
+//                    }
+//                }
+//            }
+
             // Create directory for the trail if it doesn't exist
             String dirPath = "hiking_trail/" + trail.getTrailName();
             File directory = new File(context.getFilesDir(), dirPath);
@@ -136,7 +164,7 @@ public class MapContentHandler {
         }
     }
 
-    private String extractTrailwatchId(String mapUrl) {
+    public String extractTrailwatchId(String mapUrl) {
         try {
             Log.d(TAG, "Extracting ID from URL: " + mapUrl);
 

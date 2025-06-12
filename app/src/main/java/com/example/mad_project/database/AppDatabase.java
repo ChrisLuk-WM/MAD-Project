@@ -35,7 +35,7 @@ import com.example.mad_project.database.entities.WeatherHistoryEntity;
                 EmergencyContactEntity.class,
                 WeatherHistoryEntity.class
         },
-        version = 3,
+        version = 4,
         exportSchema = false
 )
 @TypeConverters({LocalDateTimeConverter.class})

@@ -32,7 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 public class HikingTrailImageDownloader {
     private static final String TAG = "HikingTrailImageDownloader";
     private final Context context;
@@ -319,6 +320,24 @@ public class HikingTrailImageDownloader {
 
                     database.trailImageDao().insert(trailImage);
                 }
+
+                // Extract coordinates from the page
+                Elements coordElements = doc.select("div.coordinates, div.gps-info");
+                for (Element coordElement : coordElements) {
+                    String coordText = coordElement.text();
+                    // Look for patterns like "22.123456, 114.123456" or similar
+                    Pattern pattern = Pattern.compile("(\\d+\\.\\d+)°?\\s*[,N]\\s*(\\d+\\.\\d+)°?\\s*[E]");
+                    Matcher matcher = pattern.matcher(coordText);
+                    if (matcher.find()) {
+                        double lat = Double.parseDouble(matcher.group(1));
+                        double lng = Double.parseDouble(matcher.group(2));
+                        trail.setLatitude(lat);
+                        trail.setLongitude(lng);
+                        database.trailDao().update(trail);
+                        break;
+                    }
+                }
+
 
                 Elements mapLinks = doc.select("a span.icon.map").parents();
                 for (Element mapLink : mapLinks) {

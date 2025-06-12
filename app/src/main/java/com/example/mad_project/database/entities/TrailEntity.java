@@ -16,6 +16,8 @@ public class TrailEntity {
     private double durationRating;
     private String sourceUrl;
     private String imagePath;    // Local storage path for trail images
+    private double latitude;
+    private double longitude;
     private long lastUpdated;    // Timestamp for data freshness
 
     // Constructor matching the JSON structure
@@ -62,6 +64,11 @@ public class TrailEntity {
     public void setLastUpdated(long lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
+
+    public double getLatitude() { return latitude; }
+    public void setLatitude(double latitude) { this.latitude = latitude; }
+    public double getLongitude() { return longitude; }
+    public void setLongitude(double longitude) { this.longitude = longitude; }
 
     public boolean isInited() {
         long SEVEN_DAYS_IN_MILLIS = 7 * 24 * 60 * 60 * 1000L;

@@ -74,14 +74,14 @@ public class CurrentWeather {
         private String place;
 
         @SerializedName("value")
-        private Integer value;
+        private double value;
 
         @SerializedName("desc")
         private String desc;
 
         public String getPlace() { return place; }
         public void setPlace(String place) { this.place = place; }
-        public Integer getValue() { return value; }
+        public double getValue() { return value; }
         public void setValue(Integer value) { this.value = value; }
         public String getDesc() { return desc; }
         public void setDesc(String desc) { this.desc = desc; }

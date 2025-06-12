@@ -16,90 +16,130 @@
         app:cardElevation="2dp"
         app:cardBackgroundColor="@color/card_background">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp">
-
-            <!-- District name -->
-            <TextView
-                android:id="@+id/text_district"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="14sp"
-                android:textColor="?android:textColorSecondary"
-                android:layout_marginBottom="8dp"/>
+            android:layout_height="match_parent">
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <ImageView
-                        android:id="@+id/weather_icon"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_marginEnd="8dp"/>
-
-                    <TextView
-                        android:id="@+id/text_temperature"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textSize="24sp"
-                        android:textStyle="bold"/>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:gravity="end">
-
-                    <TextView
-                        android:id="@+id/text_humidity"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-
-                    <TextView
-                        android:id="@+id/text_uv_index"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"/>
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- Warning Messages Container -->
-            <LinearLayout
-                android:id="@+id/warning_messages_container"
+                android:id="@+id/weather_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginTop="8dp">
+                android:padding="16dp">
 
-                <!-- Warning messages will be added here programmatically -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/text_district"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textColor="?android:textColorSecondary"/>
+
+                    <ImageButton
+                        android:id="@+id/button_reload_weather"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_refresh"
+                        android:padding="4dp"
+                        android:contentDescription="Reload weather data"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:id="@+id/weather_icon"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginEnd="8dp"/>
+
+                        <TextView
+                            android:id="@+id/text_temperature"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="24sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:gravity="end">
+
+                        <TextView
+                            android:id="@+id/text_humidity"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                        <TextView
+                            android:id="@+id/text_uv_index"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Warning Messages Container -->
+                <LinearLayout
+                    android:id="@+id/warning_messages_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="8dp">
+
+                    <!-- Warning messages will be added here programmatically -->
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chip_hiking_condition"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:padding="12dp"
+                    android:textAlignment="center"
+                    android:textColor="@android:color/white"
+                    android:clickable="false"
+                    android:focusable="false"
+                    app:cornerRadius="16dp"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
+
+
             </LinearLayout>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/chip_hiking_condition"
+            <!-- Loading overlay -->
+            <FrameLayout
+                android:id="@+id/loading_view"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:padding="12dp"
-                android:textAlignment="center"
-                android:textColor="@android:color/white"
-                android:clickable="false"
-                android:focusable="false"
-                app:cornerRadius="16dp"
-                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
-        </LinearLayout>
+                android:layout_height="match_parent"
+                android:visibility="gone"
+                android:background="#33000000">
+
+                <ProgressBar
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"/>
+
+            </FrameLayout>
+
+        </FrameLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <!-- Today's Activity Card -->

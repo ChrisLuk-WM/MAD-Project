@@ -19,6 +19,7 @@ import java.util.List;
 
 public class TrackingWorkManager {
     private static final String TRACKING_WORK_NAME = "TrackingWork";
+    private static final String WEATHER_WORK_NAME = "WeatherWork";
     private final WorkManager workManager;
     private final Context context;
 
@@ -44,6 +45,19 @@ public class TrackingWorkManager {
                 ExistingWorkPolicy.REPLACE,
                 trackingRequest
         );
+
+        OneTimeWorkRequest weatherRequest = new OneTimeWorkRequest.Builder(WeatherWorker.class)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setConstraints(constraints)
+                .build();
+
+        workManager.enqueueUniqueWork(
+                WEATHER_WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                weatherRequest
+        );
+
+        WeatherService.getInstance(context).onTrackingStarted();
     }
 
     public void stopTracking() {
@@ -53,6 +67,10 @@ public class TrackingWorkManager {
                 .addListener(() -> {
                     // Work has been cancelled
                 }, ContextCompat.getMainExecutor(context));
+
+
+        workManager.cancelUniqueWork(WEATHER_WORK_NAME);
+        WeatherService.getInstance(context).onTrackingStopped();
     }
 
     public boolean isTracking() {

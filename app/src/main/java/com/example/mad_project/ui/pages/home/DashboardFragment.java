@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -26,6 +27,7 @@ import com.example.mad_project.R;
 import com.example.mad_project.api.WeatherRepository;
 import com.example.mad_project.api.models.CurrentWeather;
 import com.example.mad_project.content_downloader.WeatherIconDownloader;
+import com.example.mad_project.services.WeatherService;
 import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.utils.WeatherWarningUtils;
 import com.google.android.material.button.MaterialButton;
@@ -35,13 +37,14 @@ import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.util.List;
 
-public class DashboardFragment extends Fragment {
+public class DashboardFragment extends Fragment implements WeatherService.WeatherUpdateListener  {
     // Weather section
     private ImageView weatherIcon;
     private TextView temperatureText;
     private TextView humidityText;
     private TextView uvIndexText;
     private TextView districtText;
+    private ImageButton reloadButton;
     private MaterialButton hikingConditionChip;
     private LinearLayout warningMessagesContainer;
     private WeatherIconDownloader iconDownloader;
@@ -56,6 +59,7 @@ public class DashboardFragment extends Fragment {
 
     // Health section
     private TextView healthInsightText;
+    private WeatherService weatherService;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -69,10 +73,12 @@ public class DashboardFragment extends Fragment {
         initializeViews(view);
 
         iconDownloader = WeatherIconDownloader.getInstance(requireContext());
+        weatherService = WeatherService.getInstance(requireContext());
+        weatherService.addListener(this);
 
-        // Start real data updates
-        updateWeatherInfo();
-        startWeatherUpdates();
+        // Check if there's existing weather data
+        showLoading(true);
+        fetchWeatherData();
     }
 
     private void initializeViews(View view) {
@@ -86,6 +92,18 @@ public class DashboardFragment extends Fragment {
         hikingConditionChip.setEnabled(false); // Disable the button
         hikingConditionChip.setStateListAnimator(null); // Remove click animation
         warningMessagesContainer = view.findViewById(R.id.warning_messages_container);
+
+        reloadButton = view.findViewById(R.id.button_reload_weather);
+        reloadButton.setOnClickListener(v -> {
+            // Animate the button
+            reloadButton.animate()
+                    .rotationBy(360f)
+                    .setDuration(1000)
+                    .start();
+            // Fetch weather data
+            showLoading(true);
+            fetchWeatherData();
+        });
 
         // Activity section
         stepsProgress = view.findViewById(R.id.progress_steps);
@@ -118,56 +136,25 @@ public class DashboardFragment extends Fragment {
         healthInsightText.setText("Perfect weather for a hike! Consider taking advantage of the mild temperature and clear skies.");
     }
 
-    // Add periodic updates
-    private void startWeatherUpdates() {
-        // Create a handler for periodic updates
-        Handler handler = new Handler(Looper.getMainLooper());
-        Runnable weatherUpdateRunnable = new Runnable() {
-            @Override
-            public void run() {
-                updateWeatherInfo();
-                // Schedule next update in 1 minutes
-                handler.postDelayed(this, 1 * 60 * 1000);
-            }
-        };
-
-        // Start periodic updates
-        handler.post(weatherUpdateRunnable);
-    }
-
-    // These methods will be implemented later with real data
-    private void updateWeatherInfo() {
-        showLoading(true);
-
-        WeatherRepository repository = new WeatherRepository(requireContext());
-        repository.getCurrentWeather(new WeatherRepository.WeatherCallback<CurrentWeather>() {
-
-            @Override
-            public void onSuccess(CurrentWeather result) {
-                if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> {
-                    showLoading(false);
-                    updateWeatherViews(result);
-                });
-            }
-
-            @Override
-            public void onError(String error) {
-                if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> {
-                    showLoading(false);
-                    loadTemplateData();
-                    showError(error);
-                });
-            }
-        });
-    }
-
     private void showLoading(boolean isLoading) {
-        // Assuming you have a ProgressBar in your layout
-//        if (progressBar != null) {
-//            progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
-//        }
+        if (getView() == null) return;
+
+        View loadingView = getView().findViewById(R.id.loading_view);
+        if (loadingView != null) {
+            loadingView.setVisibility(isLoading ? View.VISIBLE : View.GONE);
+        }
+
+        // Disable reload button while loading
+        if (reloadButton != null) {
+            reloadButton.setEnabled(!isLoading);
+            reloadButton.setAlpha(isLoading ? 0.5f : 1.0f);
+        }
+
+        // Optionally dim the content while loading
+        View contentView = getView().findViewById(R.id.weather_container);
+        if (contentView != null) {
+            contentView.setAlpha(isLoading ? 0.5f : 1.0f);
+        }
     }
 
     @SuppressLint("DefaultLocale")
@@ -202,7 +189,7 @@ public class DashboardFragment extends Fragment {
         // Update UV index
         if (weather.getUvindex() != null && !weather.getUvindex().getData().isEmpty()) {
             CurrentWeather.UVIndexRecord uvRecord = weather.getUvindex().getData().get(0);
-            uvIndexText.setText(String.format("UV Index: %d (%s)",
+            uvIndexText.setText(String.format("UV Index: %.1f (%s)",  // Changed from %d to %.1f
                     uvRecord.getValue(),
                     uvRecord.getDesc()));
         } else {
@@ -345,43 +332,6 @@ public class DashboardFragment extends Fragment {
             );
         }
     }
-
-    private int[] getWarningColors(int severity) {
-        // Returns [backgroundColor, strokeColor, textColor]
-        switch (severity) {
-            case 5:
-                return new int[] {
-                        Color.parseColor("#FFEBEE"), // Light red
-                        Color.parseColor("#EF5350"), // Red
-                        Color.parseColor("#C62828")  // Dark red
-                };
-            case 4:
-                return new int[] {
-                        Color.parseColor("#FCE4EC"), // Light pink
-                        Color.parseColor("#EC407A"), // Pink
-                        Color.parseColor("#880E4F")  // Dark pink
-                };
-            case 3:
-                return new int[] {
-                        Color.parseColor("#FFF3E0"), // Light orange
-                        Color.parseColor("#FFB74D"), // Orange
-                        Color.parseColor("#E65100")  // Dark orange
-                };
-            case 2:
-                return new int[] {
-                        Color.parseColor("#FFFDE7"), // Light yellow
-                        Color.parseColor("#FDD835"), // Yellow
-                        Color.parseColor("#F57F17")  // Dark yellow
-                };
-            default:
-                return new int[] {
-                        Color.parseColor("#E8F5E9"), // Light green
-                        Color.parseColor("#66BB6A"), // Green
-                        Color.parseColor("#2E7D32")  // Dark green
-                };
-        }
-    }
-
     private void updateWeatherIcon(int iconCode) {
         WeatherIconDownloader.WeatherIconInfo iconInfo = iconDownloader.getWeatherIcon(iconCode);
         if (iconInfo != null) {
@@ -420,17 +370,192 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // Remove any pending weather updates
-        if (getView() != null) {
-            Handler handler = getView().getHandler();
-            if (handler != null) {
-                handler.removeCallbacksAndMessages(null);
-            }
-        }
-
-        // Clean up WeatherIconDownloader
+        weatherService.removeListener(this);
         if (iconDownloader != null) {
             iconDownloader.shutdown();
         }
+    }
+
+    @Override
+    public void onWeatherUpdated(CurrentWeather weather) {
+        if (getActivity() == null) return;
+        getActivity().runOnUiThread(() -> {
+            showLoading(false);
+            updateWeatherViews(weather);
+        });
+    }
+
+    @Override
+    public void onWarningsUpdated(List<WeatherWarningUtils.WarningInfo> warnings) {
+        if (getActivity() == null) return;
+        getActivity().runOnUiThread(() -> {
+            updateWarningMessagesWithInfo(warnings);
+        });
+    }
+
+    @Override
+    public void onError(String error) {
+        if (getActivity() == null) return;
+        getActivity().runOnUiThread(() -> {
+            showLoading(false);
+            loadTemplateData();
+            showError(error);
+        });
+    }
+
+    private void updateWarningMessagesWithInfo(List<WeatherWarningUtils.WarningInfo> warningInfos) {
+        warningMessagesContainer.removeAllViews();
+        Context context = requireContext();
+
+        if (!warningInfos.isEmpty()) {
+            // Create container for warning icons
+            LinearLayout warningIconsContainer = new LinearLayout(context);
+            warningIconsContainer.setOrientation(LinearLayout.HORIZONTAL);
+            warningIconsContainer.setLayoutParams(new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+            ));
+            warningIconsContainer.setPadding(0, dpToPx(context, 4), 0, dpToPx(context, 4));
+
+            // Add warning icons
+            for (WeatherWarningUtils.WarningInfo warning : warningInfos) {
+                // Get clean warning text
+                String warningText = warning.getLevel();
+
+                // Create and add icon (keep existing icon creation code)
+                MaterialCardView iconCard = createWarningIconCard(context, warningText);
+                warningIconsContainer.addView(iconCard);
+            }
+
+            warningMessagesContainer.addView(warningIconsContainer);
+
+            // Add reminder card if there are warnings
+            if (!warningInfos.isEmpty()) {
+                MaterialCardView reminderCard = createReminderCard(context, warningInfos);
+                warningMessagesContainer.addView(reminderCard);
+            }
+
+            // Update hiking advice
+            String hikingAdvice = WeatherWarningUtils.getHikingAdvice(warningInfos);
+            boolean isRecommended = WeatherWarningUtils.isHikingRecommended(warningInfos);
+
+            hikingConditionChip.setText(hikingAdvice);
+            hikingConditionChip.setBackgroundTintList(
+                    ColorStateList.valueOf(isRecommended ?
+                            Color.parseColor("#4CAF50") : // Green
+                            Color.parseColor("#F44336")   // Red
+                    )
+            );
+        }
+    }
+
+    private MaterialCardView createWarningIconCard(Context context, String warningText) {
+        MaterialCardView iconCard = new MaterialCardView(context);
+        LinearLayout.LayoutParams iconCardParams = new LinearLayout.LayoutParams(
+                dpToPx(context, 48), // Fixed width
+                dpToPx(context, 48)  // Fixed height
+        );
+        iconCardParams.setMargins(
+                dpToPx(context, 4),
+                0,
+                dpToPx(context, 4),
+                0
+        );
+        iconCard.setLayoutParams(iconCardParams);
+        iconCard.setCardElevation(0);
+        iconCard.setRadius(dpToPx(context, 8));
+        iconCard.setCardBackgroundColor(Color.WHITE);
+
+        // Create and setup ImageView
+        ImageView warningIcon = new ImageView(context);
+        warningIcon.setLayoutParams(new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        ));
+        warningIcon.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        warningIcon.setPadding(
+                dpToPx(context, 4),
+                dpToPx(context, 4),
+                dpToPx(context, 4),
+                dpToPx(context, 4)
+        );
+
+        // Load warning icon
+        WeatherIconDownloader.WeatherIconInfo iconInfo = iconDownloader.getWarningIcon(warningText);
+        if (iconInfo != null) {
+            warningIcon.setImageBitmap(iconInfo.getIconBitmap());
+        }
+
+        iconCard.addView(warningIcon);
+        return iconCard;
+    }
+
+    private MaterialCardView createReminderCard(Context context, List<WeatherWarningUtils.WarningInfo> warnings) {
+        MaterialCardView reminderCard = new MaterialCardView(context);
+        reminderCard.setCardBackgroundColor(Color.parseColor("#FFEBEE")); // Light red
+        reminderCard.setStrokeColor(Color.parseColor("#EF5350")); // Red
+        reminderCard.setStrokeWidth(2);
+        reminderCard.setCardElevation(0);
+        reminderCard.setRadius(dpToPx(context, 8));
+
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.setMargins(0, dpToPx(context, 8), 0, dpToPx(context, 4));
+        reminderCard.setLayoutParams(cardParams);
+
+        // Add reminders
+        LinearLayout reminderContent = new LinearLayout(context);
+        reminderContent.setOrientation(LinearLayout.VERTICAL);
+        reminderContent.setPadding(
+                dpToPx(context, 16),
+                dpToPx(context, 12),
+                dpToPx(context, 16),
+                dpToPx(context, 12)
+        );
+
+        TextView titleText = new TextView(context);
+        titleText.setText("Safety Reminders");
+        titleText.setTypeface(titleText.getTypeface(), Typeface.BOLD);
+        titleText.setTextColor(Color.parseColor("#C62828")); // Dark red
+
+        TextView reminderText = new TextView(context);
+        StringBuilder reminders = new StringBuilder();
+        for (WeatherWarningUtils.WarningInfo warning : warnings) {
+            reminders.append("• ").append(warning.getReminder()).append("\n");
+        }
+        reminderText.setText(reminders.toString().trim());
+        reminderText.setTextColor(Color.parseColor("#C62828")); // Dark red
+        reminderText.setPadding(0, dpToPx(context, 4), 0, 0);
+
+        reminderContent.addView(titleText);
+        reminderContent.addView(reminderText);
+        reminderCard.addView(reminderContent);
+
+        return reminderCard;
+    }
+
+    private void fetchWeatherData() {
+        weatherService.fetchWeatherData(new WeatherRepository.WeatherCallback<CurrentWeather>() {
+            @Override
+            public void onSuccess(CurrentWeather result) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    showLoading(false);
+                    updateWeatherViews(result);
+                });
+            }
+
+            @Override
+            public void onError(String error) {
+                if (getActivity() == null) return;
+                getActivity().runOnUiThread(() -> {
+                    showLoading(false);
+                    loadTemplateData();
+                    showError(error);
+                });
+            }
+        });
     }
 }
