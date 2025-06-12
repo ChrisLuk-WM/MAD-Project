@@ -9,6 +9,7 @@
 
     <!-- Weather Card -->
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/weather_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
@@ -144,6 +145,7 @@
 
     <!-- Today's Activity Card -->
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/activity_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
@@ -258,6 +260,7 @@
 
     <!-- Health Insights Card -->
     <com.google.android.material.card.MaterialCardView
+        android:id="@+id/health_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:cardCornerRadius="16dp"
