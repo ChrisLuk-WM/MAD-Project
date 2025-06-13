@@ -3,6 +3,8 @@ package com.example.mad_project.database.entities;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import com.example.mad_project.services.HikingRecommendationHelper;
+
 @Entity(tableName = "profiles")
 public class ProfileEntity {
     @PrimaryKey(autoGenerate = true)
@@ -39,6 +41,71 @@ public class ProfileEntity {
     // Timestamps
     private long createdAt;
     private long updatedAt;
+
+    private float weeklyExerciseHours; // Direct user input needed
+    private float maxAltitudeClimbed;  // Can be tracked/updated automatically
+    private float longestHikeKm;       // Can be tracked/updated automatically
+    private int fitnessLevel;          // 1-10 scale, user input
+    private String profilePhotoPath;
+
+    // Getters and setters for new fields
+    public float getWeeklyExerciseHours() {
+        return weeklyExerciseHours;
+    }
+
+    public void setWeeklyExerciseHours(float weeklyExerciseHours) {
+        this.weeklyExerciseHours = weeklyExerciseHours;
+    }
+
+    public float getMaxAltitudeClimbed() {
+        return maxAltitudeClimbed;
+    }
+
+    public void setMaxAltitudeClimbed(float maxAltitudeClimbed) {
+        this.maxAltitudeClimbed = maxAltitudeClimbed;
+    }
+
+    public float getLongestHikeKm() {
+        return longestHikeKm;
+    }
+
+    public void setLongestHikeKm(float longestHikeKm) {
+        this.longestHikeKm = longestHikeKm;
+    }
+
+    public int getFitnessLevel() {
+        return fitnessLevel;
+    }
+
+    public void setFitnessLevel(int fitnessLevel) {
+        this.fitnessLevel = fitnessLevel;
+    }
+
+    // Helper method to convert to HikerProfile
+    public HikingRecommendationHelper.HikerProfile toHikerProfile() {
+        return new HikingRecommendationHelper.HikerProfile(
+                (float) this.age,
+                this.weight,
+                this.height,
+                calculateEffectiveFitnessLevel(),
+                (float) this.yearsOfExperience,
+                this.weeklyExerciseHours,
+                this.maxAltitudeClimbed,
+                this.longestHikeKm
+        );
+    }
+
+    // Helper method to calculate effective fitness level (1-10 scale to 0-1 scale)
+    private float calculateEffectiveFitnessLevel() {
+        float baseLevel = this.fitnessLevel / 10.0f; // Convert 1-10 scale to 0-1
+
+        // Adjust based on other factors
+        float experienceAdjustment = Math.min(this.yearsOfExperience / 10.0f, 0.2f); // Max 20% boost from experience
+        float frequencyAdjustment = Math.min(this.hikingFrequency / 20.0f, 0.15f); // Max 15% boost from frequency
+        float exerciseAdjustment = Math.min(this.weeklyExerciseHours / 20.0f, 0.15f); // Max 15% boost from exercise
+
+        return Math.min(baseLevel + experienceAdjustment + frequencyAdjustment + exerciseAdjustment, 1.0f);
+    }
 
     public int getPreferredDifficulty() {
         return preferredDifficulty;
@@ -222,5 +289,13 @@ public class ProfileEntity {
 
     public void setUpdatedAt(long updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getProfilePhotoPath() {
+        return profilePhotoPath;
+    }
+
+    public void setProfilePhotoPath(String profilePhotoPath) {
+        this.profilePhotoPath = profilePhotoPath;
     }
 }

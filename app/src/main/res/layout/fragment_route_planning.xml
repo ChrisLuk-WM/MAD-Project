@@ -73,4 +73,12 @@
                     android:layout_height="wrap_content"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <Button
+            android:id="@+id/btn_start_hiking"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Hiking"
+            android:enabled="false"
+            android:layout_marginTop="8dp"/>
     </LinearLayout>

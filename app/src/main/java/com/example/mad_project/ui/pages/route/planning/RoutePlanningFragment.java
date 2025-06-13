@@ -40,7 +40,7 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
     private RecyclerView forecastRecycler;
     private TextView weatherDetails;
     private TextView suggestions;
-    // private Button btnStartHiking;
+    private Button btnStartHiking;
     private ForecastAdapter adapter;
     private RouteDetailsViewModel viewModel;
     private HikingRecommendationHelper hikingRecommendationHelper;
@@ -87,7 +87,7 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
         forecastRecycler = null;
         weatherDetails = null;
         suggestions = null;
-        // btnStartHiking = null;
+        btnStartHiking = null;
         adapter = null;
     }
 
@@ -121,11 +121,11 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
         forecastRecycler = view.findViewById(R.id.forecast_recycler);
         weatherDetails = view.findViewById(R.id.weather_details);
         suggestions = view.findViewById(R.id.suggestions);
-        //btnStartHiking = view.findViewById(R.id.btn_start_hiking);
+        btnStartHiking = view.findViewById(R.id.btn_start_hiking);
         hikingRecommendationHelper = new HikingRecommendationHelper(requireContext());
 
-        //btnStartHiking.setEnabled(false);
-        // btnStartHiking.setOnClickListener(v -> showStartHikingDialog());
+        btnStartHiking.setEnabled(true);
+        btnStartHiking.setOnClickListener(v -> showStartHikingDialog());
     }
     private void setupRecyclerView() {
         adapter = new ForecastAdapter();
@@ -245,7 +245,7 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
     @Override
     public void onForecastSelected(ForecastItem item, int position) {
         adapter.setSelectedPosition(position);
-        // btnStartHiking.setEnabled(position == 0);
+//        btnStartHiking.setEnabled(position == 0);
         updateWeatherDetails(item);
         updateSuggestions(item);
     }

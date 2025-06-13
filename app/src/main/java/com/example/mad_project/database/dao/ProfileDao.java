@@ -5,6 +5,7 @@ import androidx.room.*;
 
 import com.example.mad_project.database.entities.ProfileEntity;
 import com.example.mad_project.database.entities.EmergencyContactEntity;
+import com.example.mad_project.services.HikingRecommendationHelper;
 
 import java.util.List;
 
@@ -35,4 +36,75 @@ public interface ProfileDao {
 
     @Query("SELECT * FROM profiles WHERE name LIKE :searchQuery")
     LiveData<List<ProfileEntity>> searchProfiles(String searchQuery);
+
+    @Query("UPDATE profiles SET " +
+            "weeklyExerciseHours = :hours, " +
+            "fitnessLevel = :fitness " +
+            "WHERE id = :profileId")
+    void updateFitnessInfo(long profileId, float hours, int fitness);
+
+    @Query("UPDATE profiles SET " +
+            "maxAltitudeClimbed = CASE " +
+            "WHEN maxAltitudeClimbed < :altitude THEN :altitude " +
+            "ELSE maxAltitudeClimbed END, " +
+            "longestHikeKm = CASE " +
+            "WHEN longestHikeKm < :distance THEN :distance " +
+            "ELSE longestHikeKm END " +
+            "WHERE id = :profileId")
+    void updateHikingAchievements(long profileId, float altitude, float distance);
+
+    @Query("SELECT " +
+            "CAST(age AS FLOAT) as age, " +
+            "weight, " +
+            "height, " +
+            "CAST(fitnessLevel AS FLOAT) / 10.0 + " +
+            "    MIN(CAST(yearsOfExperience AS FLOAT) / 10.0, 0.2) + " +
+            "    MIN(CAST(hikingFrequency AS FLOAT) / 20.0, 0.15) + " +
+            "    MIN(weeklyExerciseHours / 20.0, 0.15) as fitnessLevel, " +
+            "CAST(yearsOfExperience AS FLOAT) as experienceYears, " +  // Fixed: Added alias
+            "weeklyExerciseHours, " +
+            "maxAltitudeClimbed, " +
+            "longestHikeKm " +
+            "FROM profiles WHERE id = :profileId")
+    LiveData<HikerProfileTuple> getHikerProfileData(long profileId);
+
+    // Tuple class with Column annotations
+    class HikerProfileTuple {
+        @ColumnInfo(name = "age")
+        public float age;
+
+        @ColumnInfo(name = "weight")
+        public float weight;
+
+        @ColumnInfo(name = "height")
+        public float height;
+
+        @ColumnInfo(name = "fitnessLevel")
+        public float fitnessLevel;
+
+        @ColumnInfo(name = "experienceYears")
+        public float experienceYears;
+
+        @ColumnInfo(name = "weeklyExerciseHours")
+        public float weeklyExerciseHours;
+
+        @ColumnInfo(name = "maxAltitudeClimbed")
+        public float maxAltitudeClimbed;
+
+        @ColumnInfo(name = "longestHikeKm")
+        public float longestHikeKm;
+
+        public HikingRecommendationHelper.HikerProfile toHikerProfile() {
+            return new HikingRecommendationHelper.HikerProfile(
+                    age,
+                    weight,
+                    height,
+                    fitnessLevel,
+                    experienceYears,
+                    weeklyExerciseHours,
+                    maxAltitudeClimbed,
+                    longestHikeKm
+            );
+        }
+    }
 }
