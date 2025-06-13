@@ -24,6 +24,7 @@ public class SensorsController {
     private static SensorsController instance;
     private final Context context;
     private final List<SensorHandler> sensorHandlers = new ArrayList<>();
+    private GPSHandler gpsHandler;
     private final StatisticsManager statisticsManager;
     private final StatisticsCalculator statisticsCalculator;
     private final TrackingWorkManager trackingWorkManager;
@@ -44,7 +45,8 @@ public class SensorsController {
 
     private void initializeSensorHandlers() {
         // Add all sensor handlers to the list
-        sensorHandlers.add(new GPSHandler(context));
+        gpsHandler = new GPSHandler(context);
+        sensorHandlers.add(gpsHandler);
         sensorHandlers.add(new StepCounterHandler(context));
         // Add more handlers here as needed
     }
@@ -87,6 +89,10 @@ public class SensorsController {
         // Stop statistics calculation
         statisticsCalculator.stopSession();
         updateTrackingStatus(false);
+    }
+
+    public void getGPSInfo(){
+        gpsHandler.processOnce();
     }
 
     public void pauseTracking() {

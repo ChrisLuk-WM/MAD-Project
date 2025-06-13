@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.hardware.SensorManager;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,8 @@ import com.example.mad_project.R;
 import com.example.mad_project.api.WeatherRepository;
 import com.example.mad_project.api.models.CurrentWeather;
 import com.example.mad_project.content_downloader.WeatherIconDownloader;
+import com.example.mad_project.sensors.SensorsController;
+import com.example.mad_project.services.HikingRecommendationHelper;
 import com.example.mad_project.services.WeatherService;
 import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.ui.pages.home.card.CardHandler;
@@ -47,6 +50,10 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
     private final WeakReference<View> loadingView;
     private final WeakReference<View> weatherContainer;
 
+    private SensorsController sensorsController;
+
+    private HikingRecommendationHelper hikingRecommendationHelper;
+
     public WeatherCardHandler(WeatherCardElements elements) {
         this.weatherIcon = new WeakReference<>(elements.getWeatherIcon());
         this.temperatureText = new WeakReference<>(elements.getTemperatureText());
@@ -65,6 +72,8 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
         this.context = context;
         weatherService = WeatherService.getInstance(context);
         iconDownloader = WeatherIconDownloader.getInstance(context);
+        sensorsController = SensorsController.getInstance(context);
+        hikingRecommendationHelper = new HikingRecommendationHelper(context);
 
         weatherService.addListener(this);
         setupReloadButton();
@@ -99,6 +108,7 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
     }
 
     private void fetchWeatherData() {
+        sensorsController.getGPSInfo();
         weatherService.fetchWeatherData(new WeatherRepository.WeatherCallback<CurrentWeather>() {
             @Override
             public void onSuccess(CurrentWeather result) {
@@ -194,7 +204,8 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
         if (weather.getWarningMessage() != null) {
             List<WeatherWarningUtils.WarningInfo> warningInfos =
                     WeatherWarningUtils.parseWarnings(weather.getWarningMessage());
-            updateWarningMessagesWithInfo(warningInfos);
+            String warningMessage = WeatherWarningUtils.parseWarningMessages(weather);
+            updateWarningMessagesWithInfo(warningInfos, warningMessage);
         }
     }
 
@@ -245,7 +256,7 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
 
     @Override
     public void onWarningsUpdated(List<WeatherWarningUtils.WarningInfo> warnings) {
-        updateWarningMessagesWithInfo(warnings);
+        updateWarningMessagesWithInfo(warnings, "");
     }
 
     @Override
@@ -254,11 +265,15 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
         showError(error);
     }
 
-    private void updateWarningMessagesWithInfo(List<WeatherWarningUtils.WarningInfo> warningInfos) {
+    private void updateWarningMessagesWithInfo(List<WeatherWarningUtils.WarningInfo> warningInfos, String warningMessage) {
         LinearLayout container = warningMessagesContainer.get();
         if (container == null) return;
 
         container.removeAllViews();
+
+        if (warningMessage.isEmpty() && !warningInfos.isEmpty()){
+            warningMessage = warningInfos.get(0).getType() + " " + warningInfos.get(0).getLevel();
+        }
 
         if (!warningInfos.isEmpty()) {
             // Create container for warning icons
@@ -285,8 +300,14 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
             // Update hiking advice
             MaterialButton hikingChip = hikingConditionChip.get();
             if (hikingChip != null) {
-                String hikingAdvice = WeatherWarningUtils.getHikingAdvice(warningInfos);
-                boolean isRecommended = WeatherWarningUtils.isHikingRecommended(warningInfos);
+                HikingRecommendationHelper.HikingRecommendation recommendation = getHikingAdvise(warningMessage);
+
+                String hikingAdvice = recommendation == null ?
+                        WeatherWarningUtils.getHikingAdvice(warningInfos) :
+                        recommendation.detailedAdvice;                        ;
+                boolean isRecommended = recommendation == null ?
+                        WeatherWarningUtils.isHikingRecommended(warningInfos):
+                        recommendation.recommendationClass > 0;
 
                 hikingChip.setText(hikingAdvice);
                 hikingChip.setBackgroundTintList(
@@ -297,6 +318,25 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
                 );
             }
         }
+    }
+
+    private HikingRecommendationHelper.HikingRecommendation getHikingAdvise(String weatherConditions) {
+        if (weatherConditions.isEmpty()) return null;
+
+        HikingRecommendationHelper.HikerProfile averageHiker = new HikingRecommendationHelper.HikerProfile(
+                35f, 75f, 180f, 6f, 3f, 5f, 1500f, 15f
+        );
+
+        try {
+            HikingRecommendationHelper.HikingRecommendation recommendation =
+                    hikingRecommendationHelper.getPrediction(weatherConditions, averageHiker);
+
+            return recommendation;
+        } catch (Exception e) {
+
+        }
+
+        return null;
     }
 
     private MaterialCardView createWarningIconCard(Context context, String warningText) {

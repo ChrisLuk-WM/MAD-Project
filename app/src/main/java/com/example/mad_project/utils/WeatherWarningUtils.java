@@ -1,6 +1,9 @@
 package com.example.mad_project.utils;
 
 import androidx.annotation.NonNull;
+
+import com.example.mad_project.api.models.CurrentWeather;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -215,6 +218,25 @@ public class WeatherWarningUtils {
         }
 
         return warnings;
+    }
+
+    public static String parseWarningMessages(CurrentWeather weather){
+        if (weather == null) return "";
+
+        StringBuilder warningMessages = new StringBuilder();
+        if (weather.getWarningMessage() != null) {
+            for (String msg : weather.getWarningMessage()) {
+                warningMessages.append(msg);
+            }
+        }
+
+        if (weather.getTcmessage() != null) {
+            for (String msg : weather.getTcmessage()) {
+                warningMessages.append(msg);
+            }
+        }
+
+        return warningMessages.toString();
     }
 
     public static String getHikingAdvice(List<WarningInfo> warnings) {

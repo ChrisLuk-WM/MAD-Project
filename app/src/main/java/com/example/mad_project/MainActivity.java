@@ -26,7 +26,6 @@ import androidx.navigation.ui.NavigationUI;
 import com.example.mad_project.content_downloader.HikingTrailImageDownloader;
 import com.example.mad_project.database.AppDatabase;
 import com.example.mad_project.sensors.SensorsController;
-import com.example.mad_project.services.HikingRecommendationHelper;
 import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.ui.BaseActivity;
 import com.example.mad_project.utils.DownloadManager;
@@ -34,7 +33,6 @@ import com.example.mad_project.constants.RequiredPermissions;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
-    private HikingRecommendationHelper helper;
     private HikingTrailImageDownloader imageDownloader;
     private NavController navController;
     private SensorsController sensorsController;
@@ -48,19 +46,6 @@ public class MainActivity extends BaseActivity {
 
         DownloadManager.getInstance(this);
         sensorsController = SensorsController.getInstance(this);
-
-        try {
-            // Initialize helper
-            helper = new HikingRecommendationHelper(this);
-
-            // Run test cases
-//            testBasicScenarios();
-//            testEdgeCases();
-            testWeatherConditions();
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error in hiking recommendation test", e);
-        }
     }
 
     @Override
@@ -200,44 +185,6 @@ public class MainActivity extends BaseActivity {
     protected void onDestroy() {
         super.onDestroy();
         imageDownloader.shutdown();
-    }
-
-
-    private void testWeatherConditions() {
-        HikingRecommendationHelper.HikerProfile averageHiker = new HikingRecommendationHelper.HikerProfile(
-                35f, 75f, 180f, 6f, 3f, 5f, 1500f, 15f
-        );
-
-        // Use weather descriptions that match your training data format
-        String[] weatherConditions = {
-                "Mainly cloudy. Heavy squally showers with a few thunderstorms at first. Showers will gradually ease off later. There will be swells. Temperature 27-30 degrees."
-        };
-
-        // Also run the tokenization test
-        helper.testTokenization();
-
-        for (String weather : weatherConditions) {
-            testPrediction("Weather Test", averageHiker, weather);
-        }
-    }
-
-    @SuppressLint("LogNotTimber")
-    private void testPrediction(String testName, HikingRecommendationHelper.HikerProfile profile, String weather) {
-        try {
-            HikingRecommendationHelper.HikingRecommendation recommendation =
-                    helper.getPrediction(weather, profile);
-
-            Log.d(TAG, String.format("\nTest: %s\nWeather: %s\nResult: %s\nConfidence: %.2f\nAdvise: %s",
-                    testName,
-                    weather,
-                    recommendation.recommendationText,
-                    recommendation.confidence,
-                    recommendation.detailedAdvice
-            ));
-
-        } catch (Exception e) {
-            Log.e(TAG, "Error in test: " + testName, e);
-        }
     }
 
 }
