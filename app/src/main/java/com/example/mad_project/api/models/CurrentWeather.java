@@ -154,59 +154,42 @@ public class CurrentWeather {
     private RainfallData rainfall;
 
     @SerializedName("icon")
-    @NonNull
-    private List<Integer> icon = new ArrayList<>();
+    @Nullable
+    private List<Integer> icon;
 
     @SerializedName("iconUpdateTime")
-    @NonNull
-    private String iconUpdateTime = "";
+    @Nullable
+    private String iconUpdateTime;
+
+    @SerializedName("specialWxTips")
+    @Nullable
+    private List<String> specialWxTips;
 
     @SerializedName("uvindex")
     @Nullable
-    private UVIndex uvindex;
+    private Object uvindex;
 
     @SerializedName("temperature")
-    @NonNull
-    private TemperatureData temperature = new TemperatureData();
+    @Nullable
+    private TemperatureData temperature;
 
     @SerializedName("humidity")
-    @NonNull
-    private HumidityData humidity = new HumidityData();
+    @Nullable
+    private HumidityData humidity;
 
     @SerializedName("updateTime")
-    @NonNull
-    private String updateTime = "";
+    @Nullable
+    private String updateTime;
 
     @SerializedName("warningMessage")
     @Nullable
     private List<String> warningMessage;
 
-    @SerializedName("mintempFrom00To09")
-    @Nullable
-    private String mintempFrom00To09;
-
-    @SerializedName("rainfallFrom00To12")
-    @Nullable
-    private String rainfallFrom00To12;
-
-    @SerializedName("rainfallLastMonth")
-    @Nullable
-    private String rainfallLastMonth;
-
-    @SerializedName("rainfallJanuaryToLastMonth")
-    @Nullable
-    private String rainfallJanuaryToLastMonth;
-
     @SerializedName("tcmessage")
     @Nullable
     private List<String> tcmessage;
 
-    // Modify getters to handle nullable fields
-    @Nullable
-    public RainfallData getRainfall() {
-        return rainfall;
-    }
-
+    // Updated getters with safe defaults
     @NonNull
     public List<Integer> getIcon() {
         return icon != null ? icon : new ArrayList<>();
@@ -217,19 +200,27 @@ public class CurrentWeather {
         return iconUpdateTime != null ? iconUpdateTime : "";
     }
 
-    @Nullable
-    public UVIndex getUvindex() {
-        return uvindex;
+    @NonNull
+    public List<String> getSpecialWxTips() {
+        return specialWxTips != null ? specialWxTips : new ArrayList<>();
     }
 
     @NonNull
     public TemperatureData getTemperature() {
-        return temperature != null ? temperature : new TemperatureData();
+        if (temperature == null) {
+            temperature = new TemperatureData();
+            temperature.setData(new ArrayList<>());
+        }
+        return temperature;
     }
 
     @NonNull
     public HumidityData getHumidity() {
-        return humidity != null ? humidity : new HumidityData();
+        if (humidity == null) {
+            humidity = new HumidityData();
+            humidity.setData(new ArrayList<>());
+        }
+        return humidity;
     }
 
     @NonNull
@@ -237,85 +228,117 @@ public class CurrentWeather {
         return updateTime != null ? updateTime : "";
     }
 
-    @Nullable
+    @NonNull
     public List<String> getWarningMessage() {
-        return warningMessage;
+        return warningMessage != null ? warningMessage : new ArrayList<>();
     }
 
-    @Nullable
-    public String getMintempFrom00To09() {
-        return mintempFrom00To09;
-    }
-
-    @Nullable
-    public String getRainfallFrom00To12() {
-        return rainfallFrom00To12;
-    }
-
-    @Nullable
-    public String getRainfallLastMonth() {
-        return rainfallLastMonth;
-    }
-
-    @Nullable
-    public String getRainfallJanuaryToLastMonth() {
-        return rainfallJanuaryToLastMonth;
-    }
-
-    @Nullable
+    @NonNull
     public List<String> getTcmessage() {
-        return tcmessage;
+        return tcmessage != null ? tcmessage : new ArrayList<>();
     }
 
-    public void setWarningMessage(@Nullable List<String> warningMessage) {
-        this.warningMessage = warningMessage;
+    @Nullable
+    public RainfallData getRainfall() {
+        return rainfall;
     }
 
-    public void setRainfall(@Nullable RainfallData rainfall) {
+    @Nullable
+    public UVIndex getUvindex() {
+        if (uvindex instanceof String || uvindex == null) {
+            return null;
+        }
+        try {
+            // If it's a JSON object, Gson will handle the conversion
+            return (UVIndex) uvindex;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // Helper methods for easy access to common data
+    public int getTemperatureForStation(String station, int defaultValue) {
+        if (temperature != null && temperature.getData() != null) {
+            return temperature.getData().stream()
+                    .filter(t -> t.getPlace().equals(station))
+                    .findFirst()
+                    .map(TemperatureRecord::getValue)
+                    .orElse(defaultValue);
+        }
+        return defaultValue;
+    }
+
+    public int getHumidityValue(int defaultValue) {
+        if (humidity != null && humidity.getData() != null && !humidity.getData().isEmpty()) {
+            return humidity.getData().get(0).getValue() != null ?
+                    humidity.getData().get(0).getValue() : defaultValue;
+        }
+        return defaultValue;
+    }
+
+    public double getUVIndexValue(double defaultValue) {
+        UVIndex uv = getUvindex();
+        if (uv != null && uv.getData() != null && !uv.getData().isEmpty()) {
+            try {
+                return uv.getData().get(0).getValue();
+            } catch (Exception e) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
+
+    public String getUVIndexDescription(String defaultValue) {
+        UVIndex uv = getUvindex();
+        if (uv != null && uv.getData() != null && !uv.getData().isEmpty()) {
+            try {
+                return uv.getData().get(0).getDesc() != null ?
+                        uv.getData().get(0).getDesc() : defaultValue;
+            } catch (Exception e) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
+
+    // Simple setters
+    public void setRainfall(RainfallData rainfall) {
         this.rainfall = rainfall;
     }
 
-    public void setIcon(@NonNull List<Integer> icon) {
+    public void setIcon(List<Integer> icon) {
         this.icon = icon;
     }
 
-    public void setIconUpdateTime(@NonNull String iconUpdateTime) {
+    public void setIconUpdateTime(String iconUpdateTime) {
         this.iconUpdateTime = iconUpdateTime;
     }
 
-    public void setUvindex(@Nullable UVIndex uvindex) {
+    public void setSpecialWxTips(List<String> specialWxTips) {
+        this.specialWxTips = specialWxTips;
+    }
+
+    public void setUvindex(Object uvindex) {
         this.uvindex = uvindex;
     }
 
-    public void setTemperature(@NonNull TemperatureData temperature) {
+    public void setTemperature(TemperatureData temperature) {
         this.temperature = temperature;
     }
 
-    public void setHumidity(@NonNull HumidityData humidity) {
+    public void setHumidity(HumidityData humidity) {
         this.humidity = humidity;
     }
 
-    public void setUpdateTime(@NonNull String updateTime) {
+    public void setUpdateTime(String updateTime) {
         this.updateTime = updateTime;
     }
 
-    public void setMintempFrom00To09(@Nullable String mintempFrom00To09) {
-        this.mintempFrom00To09 = mintempFrom00To09;
+    public void setWarningMessage(List<String> warningMessage) {
+        this.warningMessage = warningMessage;
     }
 
-    public void setRainfallFrom00To12(@Nullable String rainfallFrom00To12) {
-        this.rainfallFrom00To12 = rainfallFrom00To12;
-    }
-
-    public void setRainfallLastMonth(@Nullable String rainfallLastMonth) {
-        this.rainfallLastMonth = rainfallLastMonth;
-    }
-
-    public void setRainfallJanuaryToLastMonth(@Nullable String rainfallJanuaryToLastMonth) {
-        this.rainfallJanuaryToLastMonth = rainfallJanuaryToLastMonth;
-    }
-
-    public void setTcmessage(@Nullable List<String> tcmessage) {
+    public void setTcmessage(List<String> tcmessage) {
         this.tcmessage = tcmessage;
     }
 }

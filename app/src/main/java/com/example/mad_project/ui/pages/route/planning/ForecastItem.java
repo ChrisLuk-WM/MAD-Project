@@ -1,12 +1,13 @@
 package com.example.mad_project.ui.pages.route.planning;
 
+import com.example.mad_project.services.HikingRecommendationHelper;
+
 public class ForecastItem {
     private String dayOfWeek;
     private String date;
-    private String recommendation;
     private WeatherDetails weatherDetails;
     private boolean isRecommended;
-    private ForecastAdapter.RecommendationStatus recommendationStatus;
+    private HikingRecommendationHelper.HikingRecommendation recommendation;
 
     public static class WeatherDetails {
         private String forecastWeather;
@@ -81,14 +82,6 @@ public class ForecastItem {
         this.date = date;
     }
 
-    public String getRecommendation() {
-        return recommendation;
-    }
-
-    public void setRecommendation(String recommendation) {
-        this.recommendation = recommendation;
-    }
-
     public WeatherDetails getWeatherDetails() {
         return weatherDetails;
     }
@@ -105,11 +98,11 @@ public class ForecastItem {
         isRecommended = recommended;
     }
 
-    public ForecastAdapter.RecommendationStatus getRecommendationStatus() {
-        return recommendationStatus;
+    public HikingRecommendationHelper.HikingRecommendation getRecommendation() {
+        return recommendation;
     }
 
-    public void setRecommendationStatus(ForecastAdapter.RecommendationStatus status) {
-        this.recommendationStatus = status;
+    public void setRecommendation(HikingRecommendationHelper.HikingRecommendation recommendation) {
+        this.recommendation = recommendation;
     }
 }

@@ -1,5 +1,7 @@
 package com.example.mad_project.ui.pages.route.planning;
 
+import static com.example.mad_project.ui.pages.route.planning.ForecastAdapter.RecommendationStatus.*;
+
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,33 +48,40 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
             date.setText(item.getDate());
 
             // Set recommendation text and color based on status
-            switch (item.getRecommendationStatus()) {
-                case RECOMMENDED:
-                    recommendation.setText("Good");
-                    recommendation.setTextColor(context.getColor(R.color.recommendation_safe));
-                    cardView.setCardBackgroundColor(context.getColor(R.color.recommendation_safe_light));
-                    break;
+            if (item.getRecommendation() != null) {
+                RecommendationStatus status;
+                switch (item.getRecommendation().recommendationClass) {
+                    case 2:
+                        recommendation.setText("Good");
+                        recommendation.setTextColor(context.getColor(R.color.recommendation_safe));
+                        cardView.setCardBackgroundColor(context.getColor(R.color.recommendation_safe_light));
+                        status = RECOMMENDED;
+                        break;
 
-                case CAUTION:
-                    recommendation.setText("Caution");
-                    recommendation.setTextColor(context.getColor(R.color.recommendation_caution));
-                    cardView.setCardBackgroundColor(context.getColor(R.color.recommendation_caution_light));
-                    break;
+                    case 1:
+                        recommendation.setText("Caution");
+                        recommendation.setTextColor(context.getColor(R.color.recommendation_caution));
+                        cardView.setCardBackgroundColor(context.getColor(R.color.recommendation_caution_light));
+                        status = CAUTION;
+                        break;
 
-                case NOT_RECOMMENDED:
-                    recommendation.setText("Avoid");
-                    recommendation.setTextColor(context.getColor(R.color.recommendation_unsafe));
-                    cardView.setCardBackgroundColor(context.getColor(R.color.recommendation_unsafe_light));
-                    break;
-            }
+                    case 0:
+                    default:
+                        recommendation.setText("Avoid");
+                        recommendation.setTextColor(context.getColor(R.color.recommendation_unsafe));
+                        cardView.setCardBackgroundColor(context.getColor(R.color.recommendation_unsafe_light));
+                        status = NOT_RECOMMENDED;
+                        break;
+                }
 
-            // Handle selection state
-            cardView.setChecked(isSelected);
-            if (isSelected) {
-                cardView.setStrokeWidth(context.getResources().getDimensionPixelSize(R.dimen.card_selected_stroke_width));
-                cardView.setStrokeColor(getStrokeColorForStatus(context, item.getRecommendationStatus()));
-            } else {
-                cardView.setStrokeWidth(0);
+                // Handle selection state
+                cardView.setChecked(isSelected);
+                if (isSelected) {
+                    cardView.setStrokeWidth(context.getResources().getDimensionPixelSize(R.dimen.card_selected_stroke_width));
+                    cardView.setStrokeColor(getStrokeColorForStatus(context, status));
+                } else {
+                    cardView.setStrokeWidth(0);
+                }
             }
 
             // Set click listener

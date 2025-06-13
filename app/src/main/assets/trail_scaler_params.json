@@ -1,0 +1,19 @@
+{
+  "description": "StandardScaler parameters for trail statistics normalization",
+  "mean": [
+    3.7239,
+    10.8738,
+    4.6374
+  ],
+  "scale": [
+    0.8609406425532483,
+    6.465916297014678,
+    2.2112035727178085
+  ],
+  "feature_names": [
+    "difficulty",
+    "length_km",
+    "duration_hours"
+  ],
+  "normalization_formula": "(value - mean) / scale"
+}

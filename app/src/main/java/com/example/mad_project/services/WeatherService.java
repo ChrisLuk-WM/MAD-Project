@@ -153,4 +153,27 @@ public class WeatherService {
             }
         });
     }
+
+    public void fetchNineDayForecast(WeatherRepository.WeatherCallback<CurrentWeather> callback) {
+        repository.getCurrentWeather(new WeatherRepository.WeatherCallback<CurrentWeather>() {
+            @Override
+            public void onSuccess(CurrentWeather result) {
+                currentWeather = result;
+                notifyListenersWeatherUpdated(result);
+                if (callback != null) {
+                    callback.onSuccess(result);
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                if (callback != null) {
+                    callback.onError(error);
+                }
+                for (WeatherUpdateListener listener : listeners) {
+                    listener.onError(error);
+                }
+            }
+        });
+    }
 }
