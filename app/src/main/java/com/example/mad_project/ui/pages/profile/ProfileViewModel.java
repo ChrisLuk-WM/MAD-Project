@@ -12,7 +12,7 @@ import com.example.mad_project.utils.ImageUtils;
 
 public class ProfileViewModel extends AndroidViewModel {
     private final ProfileRepository repository;
-    private Long currentProfileId;
+    private final MutableLiveData<Long> currentProfileId = new MutableLiveData<>();
 
     public ProfileViewModel(Application application) {
         super(application);
@@ -23,13 +23,18 @@ public class ProfileViewModel extends AndroidViewModel {
         return repository.getCurrentProfile();
     }
 
-    public LiveData<Boolean> saveProfile(ProfileEntity profile) {
-        MutableLiveData<Boolean> result = new MutableLiveData<>();
-        repository.insert(profile);
-        result.setValue(true);
+    public LiveData<Long> saveProfile(ProfileEntity profile) {
+        MutableLiveData<Long> result = new MutableLiveData<>();
+        repository.insert(profile, id -> {
+            currentProfileId.postValue(id);
+            result.postValue(id);
+        });
         return result;
     }
 
+    public LiveData<Long> getCurrentProfileId() {
+        return currentProfileId;
+    }
     public void updateProfilePhoto(String photoPath) {
         ProfileEntity currentProfile = getCurrentProfile().getValue();
         if (currentProfile != null) {
@@ -40,7 +45,7 @@ public class ProfileViewModel extends AndroidViewModel {
             }
             currentProfile.setProfilePhotoPath(photoPath);
             repository.update(currentProfile);
-            currentProfileId = currentProfile.getId();
+            currentProfileId.postValue(currentProfile.getId());
         }
     }
 }

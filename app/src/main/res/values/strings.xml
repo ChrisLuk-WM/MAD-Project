@@ -4,4 +4,23 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
     <string name="tracking_service_description">This service tracks your hiking activity, including location, steps, and elevation, even when the app is in background.</string>
     <string name="special_use_description">Location tracking for hiking</string>
+    <string name="no_profile_name">Set up your profile</string>
+    <string name="no_data_available">--</string>
+    <string name="format_distance">%.1f km</string>
+    <string name="format_elevation">%dm</string>
+    <string name="format_duration">%dh %dm</string>
+    <string name="blood_type_format">Blood Type: %s</string>
+    <string name="age_format">Age: %d</string>
+    <string name="no_emergency_contacts">No emergency contacts added</string>
+    <string name="no_personal_info">No personal information available</string>
+    <string name="no_hiking_sessions">No hiking sessions yet</string>
+    <string name="beginner_level">Beginner Hiker</string>
+    <string name="intermediate_level">Intermediate Hiker</string>
+    <string name="advanced_level">Advanced Hiker</string>
+    <string name="expert_level">Expert Hiker</string>
+    <string name="name_format">Name: %s</string>
+    <string name="weight_format">Weight: %.1f kg</string>
+    <string name="health_conditions_format">Health Conditions: %s</string>
+    <string name="medications_format">Medications: %s</string>
+    <string name="allergies_format">Allergies: %s</string>
 </resources>

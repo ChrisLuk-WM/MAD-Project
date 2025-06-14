@@ -68,6 +68,9 @@ public interface ProfileDao {
             "FROM profiles WHERE id = :profileId")
     LiveData<HikerProfileTuple> getHikerProfileData(long profileId);
 
+    @Query("SELECT * FROM profiles WHERE id = :profileId")
+    LiveData<ProfileEntity> getProfileById(long profileId);
+
     // Tuple class with Column annotations
     class HikerProfileTuple {
         @ColumnInfo(name = "age")

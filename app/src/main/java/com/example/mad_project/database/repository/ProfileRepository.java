@@ -8,11 +8,15 @@ import androidx.lifecycle.Transformations;
 import com.example.mad_project.database.AppDatabase;
 import com.example.mad_project.database.dao.EmergencyContactDao;
 import com.example.mad_project.database.dao.ProfileDao;
+import com.example.mad_project.database.entities.EmergencyContactEntity;
 import com.example.mad_project.database.entities.ProfileEntity;
 import com.example.mad_project.services.HikingRecommendationHelper;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import android.os.Handler;
+import android.os.Looper;
 
 public class ProfileRepository {
     private final ProfileDao profileDao;
@@ -76,5 +80,58 @@ public class ProfileRepository {
         );
     }
 
+    public LiveData<List<EmergencyContactEntity>> getEmergencyContacts(long profileId) {
+        return emergencyContactDao.getContactsForProfile(profileId);
+    }
+
+    public LiveData<EmergencyContactEntity> getPrimaryContact(long profileId) {
+        return emergencyContactDao.getPrimaryContact(profileId);
+    }
+
+    public void insertEmergencyContact(EmergencyContactEntity contact) {
+        executorService.execute(() -> {
+            if (contact.isPrimaryContact()) {
+                // Remove primary status from other contacts
+                updatePrimaryContactStatus(contact.getProfileId(), false);
+            }
+            emergencyContactDao.insert(contact);
+        });
+    }
+
+    public interface ProfileCallback {
+        void onProfileSaved(long profileId);
+    }
+
+    public void insert(ProfileEntity profile, ProfileCallback callback) {
+        executorService.execute(() -> {
+            long id = profileDao.insert(profile);
+            new Handler(Looper.getMainLooper()).post(() -> callback.onProfileSaved(id));
+        });
+    }
+
+    public void updateEmergencyContact(EmergencyContactEntity contact) {
+        executorService.execute(() -> {
+            if (contact.isPrimaryContact()) {
+                // Remove primary status from other contacts
+                updatePrimaryContactStatus(contact.getProfileId(), false);
+            }
+            emergencyContactDao.update(contact);
+        });
+    }
+
+    public void deleteEmergencyContact(EmergencyContactEntity contact) {
+        executorService.execute(() -> emergencyContactDao.delete(contact));
+    }
+
+    private void updatePrimaryContactStatus(long profileId, boolean isPrimary) {
+        executorService.execute(() -> {
+            // Add this query to EmergencyContactDao
+            emergencyContactDao.updateAllContactsPrimaryStatus(profileId, isPrimary);
+        });
+    }
+
+    public LiveData<ProfileEntity> getProfileById(long profileId) {
+        return profileDao.getProfileById(profileId);
+    }
     // Add more methods for CRUD operations
 }

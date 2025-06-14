@@ -48,10 +48,11 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
     private MaterialButton btnEditPhoto;
     private ShapeableImageView profileImage;
     private EmergencyContactAdapter contactAdapter;
-    private final List<EmergencyContactEntity> tempContacts = new ArrayList<>();
     private ProfileViewModel viewModel;
+    private EmergencyContactViewModel emergencyContactViewModel;
     private static final int PICK_IMAGE_REQUEST = 1;
 
+    private Long currentProfileId = null;
     @Override
     protected int getLayoutResourceId() {
         return R.layout.activity_profile;
@@ -60,10 +61,45 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Initialize ProfileViewModel
         viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
 
+        // Initialize EmergencyContactViewModel with default profile ID
+        EmergencyContactViewModel.Factory factory =
+                new EmergencyContactViewModel.Factory(getApplication(), getDefaultProfileId());
+        emergencyContactViewModel = new ViewModelProvider(this, factory)
+                .get(EmergencyContactViewModel.class);
+
         // Load existing profile
-        viewModel.getCurrentProfile().observe(this, this::updateUI);
+        viewModel.getCurrentProfile().observe(this, profile -> {
+            if (profile != null) {
+                currentProfileId = profile.getId();
+                updateUI(profile);
+                initializeEmergencyContactViewModel(currentProfileId);
+            }
+        });
+    }
+
+    private void initializeEmergencyContactViewModel(long profileId) {
+        EmergencyContactViewModel.Factory factory =
+                new EmergencyContactViewModel.Factory(getApplication(), profileId);
+        emergencyContactViewModel = new ViewModelProvider(this, factory)
+                .get(EmergencyContactViewModel.class);
+
+        // Observe emergency contacts
+        emergencyContactViewModel.getEmergencyContacts().observe(this, contacts -> {
+            contactAdapter.updateContacts(contacts);
+        });
+    }
+    private long getDefaultProfileId() {
+        // Get the default profile ID from your preferences or use a constant
+        return 1L; // Or get from SharedPreferences
+    }
+
+    @Override
+    public void onSetPrimaryContact(EmergencyContactEntity contact) {
+        emergencyContactViewModel.setPrimaryContact(contact);
     }
 
     @Override
@@ -166,7 +202,7 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
         }
 
         if (bloodTypeSpinner != null) {
-            String[] bloodTypes = new String[]{"A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"};
+            String[] bloodTypes = new String[]{"A", "B", "O", "AB"};
             ArrayAdapter<String> bloodTypeAdapter = new ArrayAdapter<>(
                     this, android.R.layout.simple_dropdown_item_1line, bloodTypes);
             bloodTypeSpinner.setAdapter(bloodTypeAdapter);
@@ -189,19 +225,12 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
     }
     @Override
     protected void setupActions() {
-        // Add null checks before setting listeners
         if (btnSaveProfile != null) {
             btnSaveProfile.setOnClickListener(v -> saveProfile());
         }
 
         if (btnAddContact != null) {
             btnAddContact.setOnClickListener(v -> showAddContactDialog());
-        }
-
-        if (btnEditPhoto != null) {
-            btnEditPhoto.setOnClickListener(v -> {
-                // TODO: Implement photo selection
-            });
         }
 
         if (btnEditPhoto != null) {
@@ -257,10 +286,11 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
             }
             profile.setUpdatedAt(now);
 
-            viewModel.saveProfile(profile).observe(this, success -> {
-                if (success) {
+            viewModel.saveProfile(profile).observe(this, profileId -> {
+                if (profileId != null && profileId > 0) {
+                    currentProfileId = profileId;
+                    initializeEmergencyContactViewModel(profileId);
                     showMessage("Profile saved successfully");
-                    finish();
                 } else {
                     showError("Failed to save profile");
                 }
@@ -288,31 +318,15 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
 
     @Override
     public void onEditContact(EmergencyContactEntity contact) {
-        // Will implement later
-    }
-
-    @Override
-    public void onDeleteContact(EmergencyContactEntity contact) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle("Delete Contact")
-                .setMessage("Are you sure you want to delete this emergency contact?")
-                .setPositiveButton("Delete", (dialog, which) -> {
-                    tempContacts.remove(contact);
-                    contactAdapter.updateContacts(tempContacts);
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    @Override
-    public void onSetPrimaryContact(EmergencyContactEntity contact) {
-        for (EmergencyContactEntity existingContact : tempContacts) {
-            existingContact.setPrimaryContact(existingContact == contact);
-        }
-        contactAdapter.updateContacts(tempContacts);
+        // TODO: Implement edit contact functionality
+        showMessage("Edit contact functionality coming soon");
     }
 
     private void showAddContactDialog() {
+        if (currentProfileId == null) {
+            showError("Please save your profile first");
+            return;
+        }
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_emergency_contact, null);
 
         TextInputEditText nameEdit = dialogView.findViewById(R.id.edit_contact_name);
@@ -322,32 +336,20 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
         TextInputEditText emailEdit = dialogView.findViewById(R.id.edit_email);
         MaterialCheckBox primaryCheckbox = dialogView.findViewById(R.id.checkbox_primary_contact);
 
-        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle("Add Emergency Contact")
                 .setView(dialogView)
-                .setPositiveButton("Add", (dialog, which) -> {
-                    // Create a temporary contact for preview
+                .setPositiveButton("Add", (dialogInterface, which) -> {
                     EmergencyContactEntity contact = new EmergencyContactEntity();
+                    contact.setProfileId(currentProfileId); // Set the correct profile ID
                     contact.setName(nameEdit.getText().toString());
-                    contact.setRelationship(relationshipEdit.getText().toString());
-                    contact.setPhoneNumber(phoneEdit.getText().toString());
-                    contact.setAlternativePhoneNumber(alternativePhoneEdit.getText().toString());
-                    contact.setEmail(emailEdit.getText().toString());
-                    contact.setPrimaryContact(primaryCheckbox.isChecked());
+                    // ... set other contact fields ...
 
-                    // For preview purposes, just add to temporary list
-                    if (primaryCheckbox.isChecked()) {
-                        // Remove primary status from other contacts
-                        for (EmergencyContactEntity existingContact : tempContacts) {
-                            existingContact.setPrimaryContact(false);
-                        }
-                    }
-                    tempContacts.add(contact);
-                    contactAdapter.updateContacts(tempContacts);
+                    emergencyContactViewModel.addEmergencyContact(contact);
                 })
-                .setNegativeButton("Cancel", null);
+                .setNegativeButton("Cancel", null)
+                .create();
 
-        AlertDialog dialog = builder.create();
         dialog.show();
 
         // Add validation
@@ -373,4 +375,15 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
         phoneEdit.addTextChangedListener(textWatcher);
     }
 
+    @Override
+    public void onDeleteContact(EmergencyContactEntity contact) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Delete Contact")
+                .setMessage("Are you sure you want to delete this emergency contact?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    emergencyContactViewModel.deleteEmergencyContact(contact);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
 }

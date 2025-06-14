@@ -26,4 +26,7 @@ public interface EmergencyContactDao {
 
     @Query("DELETE FROM emergency_contacts WHERE profileId = :profileId")
     void deleteAllContactsForProfile(long profileId);
+
+    @Query("UPDATE emergency_contacts SET isPrimaryContact = :isPrimary WHERE profileId = :profileId")
+    void updateAllContactsPrimaryStatus(long profileId, boolean isPrimary);
 }

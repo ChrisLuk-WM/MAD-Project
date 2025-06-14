@@ -8,13 +8,17 @@
     android:fitsSystemWindows="true">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/root_coordinator"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
 
         <com.google.android.material.appbar.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
+            android:layout_height="wrap_content"
+            android:background="?attr/colorPrimary">
             <include
                 android:id="@+id/toolbar_layout"
                 layout="@layout/layout_toolbar" />
@@ -64,7 +68,6 @@
                                 android:id="@+id/text_user_name"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="John Doe"
                                 android:textSize="24sp"
                                 android:textStyle="bold"/>
 
@@ -72,128 +75,24 @@
                                 android:id="@+id/text_experience_level"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Intermediate Hiker"
                                 android:textColor="?attr/colorPrimary"/>
 
                             <com.google.android.material.chip.ChipGroup
+                                android:id="@+id/chip_group_preferences"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp">
-
-                                <com.google.android.material.chip.Chip
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Mountain"/>
-
-                                <com.google.android.material.chip.Chip
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:text="Forest"/>
-                            </com.google.android.material.chip.ChipGroup>
-                        </LinearLayout>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
-
-                <!-- Today's Goals Card -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    app:cardCornerRadius="12dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Today's Goals"
-                            android:textSize="18sp"
-                            android:textStyle="bold"/>
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginTop="16dp">
-
-                            <!-- Steps Progress -->
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical"
-                                android:gravity="center">
-
-                                <com.google.android.material.progressindicator.CircularProgressIndicator
-                                    android:id="@+id/progress_steps"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:progress="65"
-                                    app:trackThickness="8dp"/>
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="6,500 Steps"/>
-                            </LinearLayout>
-
-                            <!-- Distance Progress -->
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical"
-                                android:gravity="center">
-
-                                <com.google.android.material.progressindicator.CircularProgressIndicator
-                                    android:id="@+id/progress_distance"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:progress="45"
-                                    app:trackThickness="8dp"/>
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="4.5 km"/>
-                            </LinearLayout>
-
-                            <!-- Elevation Progress -->
-                            <LinearLayout
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:orientation="vertical"
-                                android:gravity="center">
-
-                                <com.google.android.material.progressindicator.CircularProgressIndicator
-                                    android:id="@+id/progress_elevation"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:progress="30"
-                                    app:trackThickness="8dp"/>
-
-                                <TextView
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="300m Elevation"/>
-                            </LinearLayout>
+                                android:layout_marginTop="8dp"/>
                         </LinearLayout>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
                 <!-- Last Hiking Session -->
                 <androidx.cardview.widget.CardView
+                    android:id="@+id/card_last_hiking"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="16dp"
+                    android:visibility="gone"
                     app:cardCornerRadius="12dp">
 
                     <LinearLayout
@@ -231,7 +130,6 @@
                                     android:id="@+id/text_last_distance"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="8.5 km"
                                     android:textSize="20sp"
                                     android:textStyle="bold"/>
                             </LinearLayout>
@@ -252,9 +150,9 @@
                                     android:id="@+id/text_last_duration"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="2h 15m"
                                     android:textSize="20sp"
                                     android:textStyle="bold"/>
+
                             </LinearLayout>
 
                             <LinearLayout
@@ -273,53 +171,28 @@
                                     android:id="@+id/text_last_elevation"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="450m"
                                     android:textSize="20sp"
                                     android:textStyle="bold"/>
                             </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
-
-                <!-- Health Suggestions -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:cardCornerRadius="12dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:padding="16dp">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Health Suggestions"
-                            android:textSize="18sp"
-                            android:textStyle="bold"/>
-
-                        <com.google.android.material.card.MaterialCardView
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            app:cardBackgroundColor="?attr/colorPrimaryContainer"
-                            app:cardCornerRadius="8dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:padding="16dp"
-                                android:text="Based on your last hiking session, we recommend taking a moderate trail today. Remember to stay hydrated!"/>
-                        </com.google.android.material.card.MaterialCardView>
-                    </LinearLayout>
-                </androidx.cardview.widget.CardView>
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+        <!-- Emergency FAB -->
+        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+            android:id="@+id/fab_emergency"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center"
+            android:layout_margin="16dp"
+            android:text="Emergency Info"
+            app:icon="@drawable/ic_emergency"
+            app:backgroundTint="@color/recommendation_unsafe"/>
 
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/nav_view"
         android:layout_width="wrap_content"
