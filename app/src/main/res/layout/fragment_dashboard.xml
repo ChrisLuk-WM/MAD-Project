@@ -44,6 +44,16 @@
                         android:textColor="?android:textColorSecondary"/>
 
                     <ImageButton
+                        android:id="@+id/button_info"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginEnd="8dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:src="@drawable/ic_info"
+                        android:padding="4dp"
+                        android:contentDescription="Weather information"/>
+
+                    <ImageButton
                         android:id="@+id/button_reload_weather"
                         android:layout_width="32dp"
                         android:layout_height="32dp"
@@ -109,18 +119,46 @@
                     <!-- Warning messages will be added here programmatically -->
                 </LinearLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/chip_hiking_condition"
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/hiking_condition_card"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="8dp"
-                    android:padding="12dp"
-                    android:textAlignment="center"
-                    android:textColor="@android:color/white"
-                    android:clickable="false"
-                    android:focusable="false"
-                    app:cornerRadius="16dp"
-                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"/>
+                    android:layout_marginTop="8dp"
+                    app:cardBackgroundColor="#4CAF50"
+                    app:cardCornerRadius="8dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="2dp"
+                    app:strokeColor="#388E3C">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Hiking Conditions"
+                            android:textColor="#FFFFFF"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/text_hiking_advice"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textColor="#FFFFFF" />
+
+                        <TextView
+                            android:id="@+id/text_hiking_confidence"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textColor="#FFFFFF"
+                            android:textStyle="italic" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
 
             </LinearLayout>

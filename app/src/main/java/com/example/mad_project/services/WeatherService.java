@@ -9,6 +9,8 @@ import androidx.core.app.NotificationCompat;
 import com.example.mad_project.R;
 import com.example.mad_project.api.WeatherRepository;
 import com.example.mad_project.api.models.CurrentWeather;
+import com.example.mad_project.api.models.WeatherForecast;
+import com.example.mad_project.api.models.NineDayForecast;
 import com.example.mad_project.utils.WeatherWarningUtils;
 
 import java.util.ArrayList;
@@ -24,12 +26,14 @@ public class WeatherService {
     private final NotificationManager notificationManager;
     private final List<WeatherUpdateListener> listeners;
     private CurrentWeather currentWeather;
+    private WeatherForecast currentForecast;
     private final WeatherRepository repository;
     private boolean isTrackingActive = false;
 
     public interface WeatherUpdateListener {
         void onWeatherUpdated(CurrentWeather weather);
         void onWarningsUpdated(List<WeatherWarningUtils.WarningInfo> warnings);
+        default void onWeatherForecastUpdated(WeatherForecast forecast) {} // Optional implementation
         void onError(String error);
     }
 
@@ -51,6 +55,11 @@ public class WeatherService {
     void updateWeatherData(CurrentWeather weather) {
         this.currentWeather = weather;
         notifyListenersWeatherUpdated(weather);
+    }
+
+    void updateForecastData(WeatherForecast forecast) {
+        this.currentForecast = forecast;
+        notifyListenersWeatherForecastUpdated(forecast);
     }
 
     // Called by WeatherWorker when warnings need to be processed
@@ -111,14 +120,20 @@ public class WeatherService {
     }
 
     private void notifyListenersWeatherUpdated(CurrentWeather weather) {
-        for (WeatherUpdateListener listener : listeners) {
+        for (WeatherUpdateListener listener : new ArrayList<>(listeners)) {
             listener.onWeatherUpdated(weather);
         }
     }
 
     private void notifyListenersWarningsUpdated(List<WeatherWarningUtils.WarningInfo> warnings) {
-        for (WeatherUpdateListener listener : listeners) {
+        for (WeatherUpdateListener listener : new ArrayList<>(listeners)) {
             listener.onWarningsUpdated(warnings);
+        }
+    }
+
+    private void notifyListenersWeatherForecastUpdated(WeatherForecast forecast) {
+        for (WeatherUpdateListener listener : new ArrayList<>(listeners)) {
+            listener.onWeatherForecastUpdated(forecast);
         }
     }
 
@@ -127,8 +142,35 @@ public class WeatherService {
         return currentWeather;
     }
 
+    public WeatherForecast getCurrentForecast() {
+        return currentForecast;
+    }
+
     public boolean isTrackingActive() {
         return isTrackingActive;
+    }
+
+    public void getLocalWeatherForecast(WeatherRepository.WeatherCallback<WeatherForecast> callback) {
+        repository.getLocalWeatherForecast(new WeatherRepository.WeatherCallback<WeatherForecast>() {
+            @Override
+            public void onSuccess(WeatherForecast result) {
+                currentForecast = result;
+                notifyListenersWeatherForecastUpdated(result);
+                if (callback != null) {
+                    callback.onSuccess(result);
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                if (callback != null) {
+                    callback.onError(error);
+                }
+                for (WeatherUpdateListener listener : new ArrayList<>(listeners)) {
+                    listener.onError(error);
+                }
+            }
+        });
     }
 
     public void fetchWeatherData(WeatherRepository.WeatherCallback<CurrentWeather> callback) {
@@ -147,19 +189,17 @@ public class WeatherService {
                 if (callback != null) {
                     callback.onError(error);
                 }
-                for (WeatherUpdateListener listener : listeners) {
+                for (WeatherUpdateListener listener : new ArrayList<>(listeners)) {
                     listener.onError(error);
                 }
             }
         });
     }
 
-    public void fetchNineDayForecast(WeatherRepository.WeatherCallback<CurrentWeather> callback) {
-        repository.getCurrentWeather(new WeatherRepository.WeatherCallback<CurrentWeather>() {
+    public void fetchNineDayForecast(WeatherRepository.WeatherCallback<NineDayForecast> callback) {
+        repository.getNineDayForecast(new WeatherRepository.WeatherCallback<NineDayForecast>() {
             @Override
-            public void onSuccess(CurrentWeather result) {
-                currentWeather = result;
-                notifyListenersWeatherUpdated(result);
+            public void onSuccess(NineDayForecast result) {
                 if (callback != null) {
                     callback.onSuccess(result);
                 }
@@ -170,7 +210,7 @@ public class WeatherService {
                 if (callback != null) {
                     callback.onError(error);
                 }
-                for (WeatherUpdateListener listener : listeners) {
+                for (WeatherUpdateListener listener : new ArrayList<>(listeners)) {
                     listener.onError(error);
                 }
             }

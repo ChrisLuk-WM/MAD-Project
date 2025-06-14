@@ -7,6 +7,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 
 public class WeatherCardElements extends CardElements {
     private final ImageView weatherIcon;
@@ -15,9 +16,12 @@ public class WeatherCardElements extends CardElements {
     private final TextView uvIndexText;
     private final TextView districtText;
     private final ImageButton reloadButton;
-    private final MaterialButton hikingConditionChip;
     private final LinearLayout warningMessagesContainer;
     private final View loadingView;
+    private final ImageButton infoButton;
+    private MaterialCardView hikingConditionCard;
+    private TextView hikingAdviceText;
+    private TextView hikingConfidenceText;
 
     public WeatherCardElements(
             View containerView,
@@ -27,9 +31,12 @@ public class WeatherCardElements extends CardElements {
             TextView uvIndexText,
             TextView districtText,
             ImageButton reloadButton,
-            MaterialButton hikingConditionChip,
             LinearLayout warningMessagesContainer,
-            View loadingView
+            View loadingView,
+            ImageButton infoButton,
+            MaterialCardView hikingConditionCard,
+            TextView hikingAdviceText,
+            TextView hikingConfidenceText
     ) {
         super(containerView);
         this.weatherIcon = weatherIcon;
@@ -38,9 +45,12 @@ public class WeatherCardElements extends CardElements {
         this.uvIndexText = uvIndexText;
         this.districtText = districtText;
         this.reloadButton = reloadButton;
-        this.hikingConditionChip = hikingConditionChip;
         this.warningMessagesContainer = warningMessagesContainer;
         this.loadingView = loadingView;
+        this.infoButton = infoButton;
+        this.hikingConditionCard = hikingConditionCard;
+        this.hikingAdviceText = hikingAdviceText;
+        this.hikingConfidenceText = hikingConfidenceText;
     }
 
     public ImageView getWeatherIcon() { return weatherIcon; }
@@ -49,7 +59,10 @@ public class WeatherCardElements extends CardElements {
     public TextView getUvIndexText() { return uvIndexText; }
     public TextView getDistrictText() { return districtText; }
     public ImageButton getReloadButton() { return reloadButton; }
-    public MaterialButton getHikingConditionChip() { return hikingConditionChip; }
     public LinearLayout getWarningMessagesContainer() { return warningMessagesContainer; }
+    public ImageButton getInfoButton() { return infoButton; }
     public View getLoadingView() { return loadingView; }
+    public MaterialCardView getHikingConditionCard() { return hikingConditionCard; }
+    public TextView getHikingAdviceText() { return hikingAdviceText; }
+    public TextView getHikingConfidenceText() { return hikingConfidenceText; }
 }

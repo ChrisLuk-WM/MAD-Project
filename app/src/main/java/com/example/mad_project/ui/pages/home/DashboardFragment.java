@@ -73,9 +73,12 @@ public class DashboardFragment extends Fragment {
                 weatherCard.findViewById(R.id.text_uv_index),
                 weatherCard.findViewById(R.id.text_district),
                 weatherCard.findViewById(R.id.button_reload_weather),
-                weatherCard.findViewById(R.id.chip_hiking_condition),
                 weatherCard.findViewById(R.id.warning_messages_container),
-                weatherCard.findViewById(R.id.loading_view)
+                weatherCard.findViewById(R.id.loading_view),
+                weatherCard.findViewById(R.id.button_info),
+                weatherCard.findViewById(R.id.hiking_condition_card),
+                weatherCard.findViewById(R.id.text_hiking_advice),
+                weatherCard.findViewById(R.id.text_hiking_confidence)
         );
         weatherHandler = new WeatherCardHandler(weatherElements);
 
