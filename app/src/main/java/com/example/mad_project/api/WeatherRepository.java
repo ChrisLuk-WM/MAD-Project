@@ -3,6 +3,7 @@ package com.example.mad_project.api;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import com.example.mad_project.api.models.*;
 import com.example.mad_project.database.AppDatabase;
@@ -70,6 +71,7 @@ public class WeatherRepository {
                     @Override
                     public void onFailure(Call<CurrentWeather> call, Throwable t) {
                         callback.onError(t.getMessage());
+                        Log.d("getCurrentWeather", t.getMessage(), t);
                     }
                 });
     }
@@ -208,7 +210,7 @@ public class WeatherRepository {
             WeatherHistoryEntity entity = new WeatherHistoryEntity();
             entity.setUpdateTime(weather.getUpdateTime());
             entity.setIcon(weather.getIcon());
-            entity.setIconUpdateTime(weather.getIconUpdateTime());
+//            entity.setIconUpdateTime(weather.getIconUpdateTime());
 
             // Temperature
             if (weather.getTemperature() != null && !weather.getTemperature().getData().isEmpty()) {

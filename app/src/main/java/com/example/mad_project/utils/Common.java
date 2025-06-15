@@ -22,11 +22,11 @@ public class Common {
             inputStream.close();
 
             String jsonString = new String(buffer, StandardCharsets.UTF_8);
-            Log.d(TAG, "First trail name: " + jsonString.substring(0, 100));
+            //Log.d(TAG, "First trail name: " + jsonString.substring(0, 100));
 
             return new JSONObject(jsonString);
         } catch (IOException | JSONException e) {
-            Log.e(TAG, "Error reading/parsing JSON file: " + fileName, e);
+            //Log.e(TAG, "Error reading/parsing JSON file: " + fileName, e);
             return null;
         }
     }

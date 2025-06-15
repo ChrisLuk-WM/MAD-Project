@@ -14,9 +14,9 @@
             android:icon="@drawable/ic_route"
             android:title="Route Planning" />
         <item
-            android:id="@+id/nav_statistics"
+            android:id="@+id/nav_session"
             android:icon="@drawable/ic_statistics"
-            android:title="Statistics" />
+            android:title="Session" />
     </group>
 
     <item android:title="Other">

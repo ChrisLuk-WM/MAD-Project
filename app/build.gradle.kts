@@ -93,4 +93,6 @@ dependencies {
 
     // Optional: Metal delegate for newer Android devices
     implementation(libs.tensorflow.lite.gpu.delegate.plugin)
+
+    implementation(libs.osmdroid.android)
 }

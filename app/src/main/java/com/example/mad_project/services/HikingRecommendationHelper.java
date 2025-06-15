@@ -124,11 +124,11 @@ public class HikingRecommendationHelper {
                                               HikerProfile hikerProfile,
                                               TrailProfile trailProfile) {
         try {
-            Log.d(TAG, "=== PREDICTION START ===");
-            Log.d(TAG, "Model: " + MODEL_PATH);
-            Log.d(TAG, "Weather: " + weatherDescription);
-            Log.d(TAG, String.format("Trail: difficulty=%.1f, length=%.1f km, duration=%.1f hrs",
-                    trailProfile.difficulty, trailProfile.lengthKm, trailProfile.durationHours));
+//            Log.d(TAG, "=== PREDICTION START ===");
+//            Log.d(TAG, "Model: " + MODEL_PATH);
+//            Log.d(TAG, "Weather: " + weatherDescription);
+//            Log.d(TAG, String.format("Trail: difficulty=%.1f, length=%.1f km, duration=%.1f hrs",
+//                    trailProfile.difficulty, trailProfile.lengthKm, trailProfile.durationHours));
 
             // Prepare inputs
             int[][] weatherInput = tokenizeWeatherDescription(weatherDescription);
@@ -136,10 +136,10 @@ public class HikingRecommendationHelper {
             float[][] trailInput = normalizeTrailProfile(trailProfile);
 
             // Log inputs
-            Log.d(TAG, "Weather tokens (first 10): " +
-                    Arrays.toString(Arrays.copyOfRange(weatherInput[0], 0, 10)));
-            Log.d(TAG, "Hiker normalized: " + Arrays.toString(hikerInput[0]));
-            Log.d(TAG, "Trail normalized: " + Arrays.toString(trailInput[0]));
+//            Log.d(TAG, "Weather tokens (first 10): " +
+//                    Arrays.toString(Arrays.copyOfRange(weatherInput[0], 0, 10)));
+//            Log.d(TAG, "Hiker normalized: " + Arrays.toString(hikerInput[0]));
+//            Log.d(TAG, "Trail normalized: " + Arrays.toString(trailInput[0]));
 
             float[][] output = new float[1][NUM_CLASSES];
 
@@ -156,8 +156,8 @@ public class HikingRecommendationHelper {
             // Run inference
             tflite.runForMultipleInputsOutputs(inputs, outputs);
 
-            Log.d(TAG, String.format("Model output: [%.6f, %.6f, %.6f]",
-                    output[0][0], output[0][1], output[0][2]));
+//            Log.d(TAG, String.format("Model output: [%.6f, %.6f, %.6f]",
+//                    output[0][0], output[0][1], output[0][2]));
 
             // Process output
             int predictedClass = argmax(output[0]);
@@ -356,9 +356,9 @@ public class HikingRecommendationHelper {
 
     private void validateModelSpecs(Interpreter interpreter) {
         try {
-            Log.d(TAG, "=== Model Specification ===");
-            Log.d(TAG, "Input count: " + interpreter.getInputTensorCount());
-            Log.d(TAG, "Output count: " + interpreter.getOutputTensorCount());
+//            Log.d(TAG, "=== Model Specification ===");
+//            Log.d(TAG, "Input count: " + interpreter.getInputTensorCount());
+//            Log.d(TAG, "Output count: " + interpreter.getOutputTensorCount());
 
             // Validate we have 3 inputs
             if (interpreter.getInputTensorCount() != 3) {
@@ -369,8 +369,8 @@ public class HikingRecommendationHelper {
             // Log all input details first
             for (int i = 0; i < interpreter.getInputTensorCount(); i++) {
                 int[] shape = interpreter.getInputTensor(i).shape();
-                Log.d(TAG, String.format("Input %d: shape=%s, dtype=%s",
-                        i, Arrays.toString(shape), interpreter.getInputTensor(i).dataType()));
+//                Log.d(TAG, String.format("Input %d: shape=%s, dtype=%s",
+//                        i, Arrays.toString(shape), interpreter.getInputTensor(i).dataType()));
             }
 
             // Find which input is which by examining shapes and data types
@@ -386,19 +386,19 @@ public class HikingRecommendationHelper {
                 if (dataType == DataType.INT32 && shape.length == 2 &&
                         (shape[1] == WEATHER_INPUT_LENGTH || shape[0] == WEATHER_INPUT_LENGTH)) {
                     weatherInputIndex = i;
-                    Log.d(TAG, "Found weather input at index " + i);
+//                    Log.d(TAG, "Found weather input at index " + i);
                 }
                 // Hiker input should be FLOAT32 and have shape [1, 8] or [-1, 8]
                 else if (dataType == DataType.FLOAT32 && shape.length == 2 &&
                         (shape[1] == HIKER_FEATURES_COUNT || shape[0] == HIKER_FEATURES_COUNT)) {
                     hikerInputIndex = i;
-                    Log.d(TAG, "Found hiker input at index " + i);
+//                    Log.d(TAG, "Found hiker input at index " + i);
                 }
                 // Trail input should be FLOAT32 and have shape [1, 3] or [-1, 3]
                 else if (dataType == DataType.FLOAT32 && shape.length == 2 &&
                         (shape[1] == TRAIL_FEATURES_COUNT || shape[0] == TRAIL_FEATURES_COUNT)) {
                     trailInputIndex = i;
-                    Log.d(TAG, "Found trail input at index " + i);
+//                    Log.d(TAG, "Found trail input at index " + i);
                 }
             }
 
@@ -423,8 +423,8 @@ public class HikingRecommendationHelper {
 
             // Check output
             int[] outputShape = interpreter.getOutputTensor(0).shape();
-            Log.d(TAG, "Output shape: " + Arrays.toString(outputShape));
-            Log.d(TAG, "Output dtype: " + interpreter.getOutputTensor(0).dataType());
+//            Log.d(TAG, "Output shape: " + Arrays.toString(outputShape));
+//            Log.d(TAG, "Output dtype: " + interpreter.getOutputTensor(0).dataType());
 
             // Validate output shape (should be [1, 3] or [-1, 3])
             if (outputShape.length != 2 ||
@@ -433,13 +433,13 @@ public class HikingRecommendationHelper {
                         Arrays.toString(outputShape));
             }
 
-            Log.d(TAG, "Model validation passed!");
-            Log.d(TAG, "Input order: weather=" + weatherInputIndex +
-                    ", hiker=" + hikerInputIndex + ", trail=" + trailInputIndex);
-            Log.d(TAG, "=== End Model Specification ===");
+//            Log.d(TAG, "Model validation passed!");
+//            Log.d(TAG, "Input order: weather=" + weatherInputIndex +
+//                    ", hiker=" + hikerInputIndex + ", trail=" + trailInputIndex);
+//            Log.d(TAG, "=== End Model Specification ===");
 
         } catch (Exception e) {
-            Log.e(TAG, "Error validating model specifications", e);
+//            Log.e(TAG, "Error validating model specifications", e);
             throw new RuntimeException("Model specification validation failed", e);
         }
     }
@@ -469,7 +469,7 @@ public class HikingRecommendationHelper {
                 result[i] = jsonArray.getDouble(i);
             }
         } catch (JSONException e) {
-            Log.e(TAG, "Error parsing double array", e);
+//            Log.e(TAG, "Error parsing double array", e);
             throw new RuntimeException("Failed to parse double array", e);
         }
         return result;
@@ -487,7 +487,7 @@ public class HikingRecommendationHelper {
             try {
                 result.put(key, vocab.getInt(key));
             } catch (JSONException e) {
-                Log.e(TAG, "Error parsing vocabulary for key: " + key, e);
+//                Log.e(TAG, "Error parsing vocabulary for key: " + key, e);
             }
         }
         return result;

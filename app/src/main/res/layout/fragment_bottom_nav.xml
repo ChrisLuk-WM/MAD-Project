@@ -70,9 +70,9 @@
                 android:textSize="12sp"/>
         </LinearLayout>
 
-        <!-- Statistics Button -->
+        <!-- Session Button -->
         <LinearLayout
-            android:id="@+id/card_statistics"
+            android:id="@+id/card_session"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -92,7 +92,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Statistics"
+                android:text="Session"
                 android:textSize="12sp"/>
         </LinearLayout>
     </LinearLayout>

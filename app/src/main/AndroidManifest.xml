@@ -10,6 +10,11 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Optional, if you need location data from media files -->
+    <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
+
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -71,9 +76,14 @@
             android:parentActivityName=".ui.pages.route.planning.RoutePlanningActivity" />
 
         <activity
-            android:name=".ui.pages.statistics.StatisticsActivity"
-            android:label="Statistics"
+            android:name=".ui.pages.sessions.SessionActivity"
+            android:label="Sessions"
             android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".ui.pages.sessions.SessionHistoryActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.pages.sessions.SessionActivity"/>
 
     </application>
 

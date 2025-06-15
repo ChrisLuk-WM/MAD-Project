@@ -16,7 +16,7 @@
             app:destination="@id/routePlanningActivity" />
         <action
             android:id="@+id/action_home_to_statistics"
-            app:destination="@id/statisticsActivity" />
+            app:destination="@id/sessionsActivity" />
     </fragment>
 
     <activity
@@ -30,7 +30,7 @@
         android:label="Route Planning" />
 
     <activity
-        android:id="@+id/statisticsActivity"
-        android:name="com.example.mad_project.ui.pages.statistics.StatisticsActivity"
-        android:label="Statistics" />
+        android:id="@+id/sessionsActivity"
+        android:name="com.example.mad_project.ui.pages.sessions.SessionActivity"
+        android:label="Sessions" />
 </navigation>

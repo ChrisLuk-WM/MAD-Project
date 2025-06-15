@@ -47,4 +47,12 @@ public class HikingSessionEntity {
 
     public int getTotalElevationGain() { return totalElevationGain; }
     public void setTotalElevationGain(int totalElevationGain) { this.totalElevationGain = totalElevationGain; }
+
+    public long getDuration() {
+        if (startTime != null) {
+            LocalDateTime endTimeOrNow = endTime != null ? endTime : LocalDateTime.now();
+            return java.time.Duration.between(startTime, endTimeOrNow).toMillis();
+        }
+        return 0;
+    }
 }

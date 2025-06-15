@@ -21,7 +21,7 @@ import com.example.mad_project.content_downloader.HikingTrailImageDownloader;
 import com.example.mad_project.ui.pages.profile.UserDashboardActivity;
 import com.example.mad_project.ui.pages.route.RouteDetailsActivity;
 import com.example.mad_project.ui.pages.route.planning.RoutePlanningActivity;
-import com.example.mad_project.ui.pages.statistics.StatisticsActivity;
+import com.example.mad_project.ui.pages.sessions.SessionActivity;
 import com.google.android.material.navigation.NavigationView;
 import com.example.mad_project.R;
 
@@ -135,8 +135,8 @@ public abstract class BaseActivity extends AppCompatActivity implements Download
                 navigateToProfile();
             } else if (id == R.id.nav_route) {
                 navigateToRoute();
-            } else if (id == R.id.nav_statistics) {
-                navigateToStatistics();
+            } else if (id == R.id.nav_session) { // Changed from nav_statistics
+                navigateToSession();
             } else if (id == R.id.nav_settings) {
                 openSettings();
             } else if (id == R.id.nav_about) {
@@ -172,9 +172,9 @@ public abstract class BaseActivity extends AppCompatActivity implements Download
         }
     }
 
-    protected void navigateToStatistics() {
-        startActivity(new Intent(this, StatisticsActivity.class));
-        if (!(this instanceof StatisticsActivity)) {
+    protected void navigateToSession() { // Changed from navigateToStatistics
+        startActivity(new Intent(this, SessionActivity.class));
+        if (!(this instanceof SessionActivity)) {
             finish();
         }
     }

@@ -40,7 +40,7 @@ public class BottomNavFragment extends Fragment {
     private void initializeViews(View view) {
         cardProfile = view.findViewById(R.id.card_profile);
         cardRoute = view.findViewById(R.id.card_route);
-        cardStatistics = view.findViewById(R.id.card_statistics);
+        cardStatistics = view.findViewById(R.id.card_session);
 
         // Add animations to buttons
         if (cardProfile != null) addButtonAnimations(cardProfile);

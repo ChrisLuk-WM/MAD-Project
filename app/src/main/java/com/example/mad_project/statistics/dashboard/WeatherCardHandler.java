@@ -439,7 +439,7 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
             CurrentWeather.HumidityRecord humidity = weather.getHumidity().getData().get(0);
             TextView humidText = humidityText.get();
             if (humidText != null) {
-                humidText.setText(String.format("Humidity: %d%s",
+                humidText.setText(String.format("Humidity: %d%%",
                         humidity.getValue(),
                         humidity.getUnit().equals("percent") ? "%" : humidity.getUnit()));
             }

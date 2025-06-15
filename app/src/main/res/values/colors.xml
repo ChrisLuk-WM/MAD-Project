@@ -31,4 +31,6 @@
     <color name="recommendation_safe_dark">#FF388E3C</color>     <!-- Material Green 700 -->
     <color name="recommendation_caution_dark">#FFFFA000</color>  <!-- Material Amber 700 -->
     <color name="recommendation_unsafe_dark">#FFD32F2F</color>   <!-- Material Red 700 -->
+
+    <color name="colorPath">#0352DA</color>
 </resources>

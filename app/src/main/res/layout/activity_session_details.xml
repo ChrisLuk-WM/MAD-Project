@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            app:title="Session Details"
+            app:navigationIcon="@drawable/ic_close"/>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Map Fragment Container -->
+            <FrameLayout
+                android:id="@+id/map_container"
+                android:layout_width="match_parent"
+                android:layout_height="300dp"/>
+
+            <!-- Session Details -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Date and Time -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="8dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Session Time"
+                            android:textStyle="bold"
+                            android:textSize="18sp"/>
+
+                        <TextView
+                            android:id="@+id/text_start_time"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"/>
+
+                        <TextView
+                            android:id="@+id/text_end_time"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/text_duration"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Statistics -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
+                    app:cardCornerRadius="8dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Statistics"
+                            android:textStyle="bold"
+                            android:textSize="18sp"/>
+
+                        <GridLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:columnCount="2"
+                            android:rowCount="4"
+                            android:layout_marginTop="8dp">
+
+                            <!-- Distance -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Total Distance:"
+                                android:textStyle="bold"
+                                android:layout_marginEnd="8dp"
+                                android:layout_marginBottom="4dp"/>
+
+                            <TextView
+                                android:id="@+id/text_distance"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <!-- Average Speed -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Average Speed:"
+                                android:textStyle="bold"
+                                android:layout_marginEnd="8dp"
+                                android:layout_marginBottom="4dp"/>
+
+                            <TextView
+                                android:id="@+id/text_avg_speed"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <!-- Steps -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Total Steps:"
+                                android:textStyle="bold"
+                                android:layout_marginEnd="8dp"
+                                android:layout_marginBottom="4dp"/>
+
+                            <TextView
+                                android:id="@+id/text_steps"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+
+                            <!-- Elevation Gain -->
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Elevation Gain:"
+                                android:textStyle="bold"
+                                android:layout_marginEnd="8dp"/>
+
+                            <TextView
+                                android:id="@+id/text_elevation_gain"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+                        </GridLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

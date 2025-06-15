@@ -3,10 +3,24 @@ package com.example.mad_project.api.models;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.SerializedName;
 
+import java.lang.reflect.Type;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CurrentWeather {
     public static class RainfallData {
@@ -60,31 +74,19 @@ public class CurrentWeather {
         @SerializedName("data")
         private List<UVIndexRecord> data;
 
-        @SerializedName("recordDesc")
-        private String recordDesc;
-
-        public List<UVIndexRecord> getData() { return data; }
-        public void setData(List<UVIndexRecord> data) { this.data = data; }
-        public String getRecordDesc() { return recordDesc; }
-        public void setRecordDesc(String recordDesc) { this.recordDesc = recordDesc; }
+        public List<UVIndexRecord> getData() {
+            return data != null ? data : new ArrayList<>();
+        }
     }
 
     public static class UVIndexRecord {
-        @SerializedName("place")
-        private String place;
-
         @SerializedName("value")
         private double value;
-
         @SerializedName("desc")
         private String desc;
 
-        public String getPlace() { return place; }
-        public void setPlace(String place) { this.place = place; }
         public double getValue() { return value; }
-        public void setValue(Integer value) { this.value = value; }
         public String getDesc() { return desc; }
-        public void setDesc(String desc) { this.desc = desc; }
     }
 
     public static class TemperatureData {
@@ -149,37 +151,30 @@ public class CurrentWeather {
         public void setPlace(String place) { this.place = place; }
     }
 
+    // Add fields for handling unknown properties
     @SerializedName("rainfall")
     @Nullable
     private RainfallData rainfall;
 
     @SerializedName("icon")
-    @Nullable
-    private List<Integer> icon;
+    @NonNull
+    private List<Integer> icon = new ArrayList<>();
 
-    @SerializedName("iconUpdateTime")
-    @Nullable
-    private String iconUpdateTime;
+    @SerializedName("temperature")
+    @NonNull
+    private TemperatureData temperature = new TemperatureData();
 
-    @SerializedName("specialWxTips")
-    @Nullable
-    private List<String> specialWxTips;
+    @SerializedName("humidity")
+    @NonNull
+    private HumidityData humidity = new HumidityData();
+
+    @SerializedName("updateTime")
+    @NonNull
+    private String updateTime = "";
 
     @SerializedName("uvindex")
     @Nullable
-    private Object uvindex;
-
-    @SerializedName("temperature")
-    @Nullable
-    private TemperatureData temperature;
-
-    @SerializedName("humidity")
-    @Nullable
-    private HumidityData humidity;
-
-    @SerializedName("updateTime")
-    @Nullable
-    private String updateTime;
+    private String uvindex;  // Changed to String since it's often empty
 
     @SerializedName("warningMessage")
     @Nullable
@@ -187,22 +182,12 @@ public class CurrentWeather {
 
     @SerializedName("tcmessage")
     @Nullable
-    private List<String> tcmessage;
+    private Object tcmessageRaw;
 
     // Updated getters with safe defaults
     @NonNull
     public List<Integer> getIcon() {
         return icon != null ? icon : new ArrayList<>();
-    }
-
-    @NonNull
-    public String getIconUpdateTime() {
-        return iconUpdateTime != null ? iconUpdateTime : "";
-    }
-
-    @NonNull
-    public List<String> getSpecialWxTips() {
-        return specialWxTips != null ? specialWxTips : new ArrayList<>();
     }
 
     @NonNull
@@ -235,25 +220,25 @@ public class CurrentWeather {
 
     @NonNull
     public List<String> getTcmessage() {
-        return tcmessage != null ? tcmessage : new ArrayList<>();
+        if (tcmessageRaw == null) {
+            return new ArrayList<>();
+        }
+
+        if (tcmessageRaw instanceof String) {
+            String message = (String) tcmessageRaw;
+            return message.isEmpty() ? new ArrayList<>() : Collections.singletonList(message);
+        }
+
+        try {
+            return (List<String>) tcmessageRaw;
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     @Nullable
     public RainfallData getRainfall() {
         return rainfall;
-    }
-
-    @Nullable
-    public UVIndex getUvindex() {
-        if (uvindex instanceof String || uvindex == null) {
-            return null;
-        }
-        try {
-            // If it's a JSON object, Gson will handle the conversion
-            return (UVIndex) uvindex;
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     // Helper methods for easy access to common data
@@ -276,31 +261,6 @@ public class CurrentWeather {
         return defaultValue;
     }
 
-    public double getUVIndexValue(double defaultValue) {
-        UVIndex uv = getUvindex();
-        if (uv != null && uv.getData() != null && !uv.getData().isEmpty()) {
-            try {
-                return uv.getData().get(0).getValue();
-            } catch (Exception e) {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
-    }
-
-    public String getUVIndexDescription(String defaultValue) {
-        UVIndex uv = getUvindex();
-        if (uv != null && uv.getData() != null && !uv.getData().isEmpty()) {
-            try {
-                return uv.getData().get(0).getDesc() != null ?
-                        uv.getData().get(0).getDesc() : defaultValue;
-            } catch (Exception e) {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
-    }
-
     // Simple setters
     public void setRainfall(RainfallData rainfall) {
         this.rainfall = rainfall;
@@ -310,17 +270,6 @@ public class CurrentWeather {
         this.icon = icon;
     }
 
-    public void setIconUpdateTime(String iconUpdateTime) {
-        this.iconUpdateTime = iconUpdateTime;
-    }
-
-    public void setSpecialWxTips(List<String> specialWxTips) {
-        this.specialWxTips = specialWxTips;
-    }
-
-    public void setUvindex(Object uvindex) {
-        this.uvindex = uvindex;
-    }
 
     public void setTemperature(TemperatureData temperature) {
         this.temperature = temperature;
@@ -338,7 +287,44 @@ public class CurrentWeather {
         this.warningMessage = warningMessage;
     }
 
-    public void setTcmessage(List<String> tcmessage) {
-        this.tcmessage = tcmessage;
+    @Nullable
+    public UVIndex getUvindex() {
+        if (uvindex == null || uvindex instanceof String) {
+            return null;
+        }
+        try {
+            Gson gson = new Gson();
+            String jsonStr = gson.toJson(uvindex);
+            return gson.fromJson(jsonStr, UVIndex.class);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // Helper method for UV index value
+    public double getUVIndexValue(double defaultValue) {
+        UVIndex uv = getUvindex();
+        if (uv != null && !uv.getData().isEmpty()) {
+            try {
+                return uv.getData().get(0).getValue();
+            } catch (Exception e) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
+    }
+
+    // Helper method for UV index description
+    public String getUVIndexDescription(String defaultValue) {
+        UVIndex uv = getUvindex();
+        if (uv != null && !uv.getData().isEmpty()) {
+            try {
+                return uv.getData().get(0).getDesc() != null ?
+                        uv.getData().get(0).getDesc() : defaultValue;
+            } catch (Exception e) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
     }
 }
