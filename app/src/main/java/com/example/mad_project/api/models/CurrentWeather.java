@@ -74,8 +74,15 @@ public class CurrentWeather {
         @SerializedName("data")
         private List<UVIndexRecord> data;
 
+        @SerializedName("recordDesc")
+        private String recordDesc;
+
         public List<UVIndexRecord> getData() {
             return data != null ? data : new ArrayList<>();
+        }
+
+        public String getRecordDesc() {
+            return recordDesc;
         }
     }
 
@@ -174,11 +181,20 @@ public class CurrentWeather {
 
     @SerializedName("uvindex")
     @Nullable
-    private String uvindex;  // Changed to String since it's often empty
+    private Object uvindexRaw;  // Changed to String since it's often empty
+
+    public static class WarningMessageData {
+        @SerializedName("data")
+        private List<String> messages;
+
+        public List<String> getMessages() {
+            return messages != null ? messages : new ArrayList<>();
+        }
+    }
 
     @SerializedName("warningMessage")
     @Nullable
-    private List<String> warningMessage;
+    private Object warningMessageRaw;
 
     @SerializedName("tcmessage")
     @Nullable
@@ -215,7 +231,36 @@ public class CurrentWeather {
 
     @NonNull
     public List<String> getWarningMessage() {
-        return warningMessage != null ? warningMessage : new ArrayList<>();
+        if (warningMessageRaw == null) {
+            return new ArrayList<>();
+        }
+
+        // Handle empty string case
+        if (warningMessageRaw instanceof String) {
+            String message = (String) warningMessageRaw;
+            return message.isEmpty() ? new ArrayList<>() : Collections.singletonList(message);
+        }
+
+        // Handle List<String> case
+        if (warningMessageRaw instanceof List) {
+            try {
+                return (List<String>) warningMessageRaw;
+            } catch (Exception e) {
+                return new ArrayList<>();
+            }
+        }
+
+        // Handle any other case by returning empty list
+        try {
+            Gson gson = new GsonBuilder()
+                    .setLenient()
+                    .create();
+            String jsonStr = gson.toJson(warningMessageRaw);
+            WarningMessageData data = gson.fromJson(jsonStr, WarningMessageData.class);
+            return data != null ? data.getMessages() : new ArrayList<>();
+        } catch (Exception e) {
+            return new ArrayList<>();
+        }
     }
 
     @NonNull
@@ -283,25 +328,33 @@ public class CurrentWeather {
         this.updateTime = updateTime;
     }
 
-    public void setWarningMessage(List<String> warningMessage) {
-        this.warningMessage = warningMessage;
+    public void setWarningMessage(Object warningMessage) {
+        this.warningMessageRaw = warningMessage;
     }
-
+    // Update the getter method
     @Nullable
     public UVIndex getUvindex() {
-        if (uvindex == null || uvindex instanceof String) {
+        if (uvindexRaw == null || (uvindexRaw instanceof String && ((String)uvindexRaw).isEmpty())) {
             return null;
         }
+
         try {
-            Gson gson = new Gson();
-            String jsonStr = gson.toJson(uvindex);
+            if (uvindexRaw instanceof UVIndex) {
+                return (UVIndex) uvindexRaw;
+            }
+
+            Gson gson = new GsonBuilder()
+                    .setLenient()
+                    .create();
+            String jsonStr = gson.toJson(uvindexRaw);
             return gson.fromJson(jsonStr, UVIndex.class);
         } catch (Exception e) {
             return null;
         }
     }
 
-    // Helper method for UV index value
+
+    // Add helper methods for easier access
     public double getUVIndexValue(double defaultValue) {
         UVIndex uv = getUvindex();
         if (uv != null && !uv.getData().isEmpty()) {
@@ -314,7 +367,6 @@ public class CurrentWeather {
         return defaultValue;
     }
 
-    // Helper method for UV index description
     public String getUVIndexDescription(String defaultValue) {
         UVIndex uv = getUvindex();
         if (uv != null && !uv.getData().isEmpty()) {
@@ -324,6 +376,14 @@ public class CurrentWeather {
             } catch (Exception e) {
                 return defaultValue;
             }
+        }
+        return defaultValue;
+    }
+
+    public String getUVIndexRecordDesc(String defaultValue) {
+        UVIndex uv = getUvindex();
+        if (uv != null && uv.getRecordDesc() != null) {
+            return uv.getRecordDesc();
         }
         return defaultValue;
     }

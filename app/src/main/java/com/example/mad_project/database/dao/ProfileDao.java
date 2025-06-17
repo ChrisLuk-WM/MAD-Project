@@ -68,8 +68,25 @@ public interface ProfileDao {
             "FROM profiles WHERE id = :profileId")
     LiveData<HikerProfileTuple> getHikerProfileData(long profileId);
 
+    @Query("SELECT " +
+            "CAST(age AS FLOAT) as age, " +
+            "weight, " +
+            "height, " +
+            "CAST(fitnessLevel AS FLOAT) / 1.5 + " +
+            "    CAST(yearsOfExperience AS FLOAT) / 5.0 + " +
+            "    weeklyExerciseHours / 6.0 as fitnessLevel, " +
+            "CAST(yearsOfExperience AS FLOAT) as experienceYears, " +  // Fixed: Added alias
+            "weeklyExerciseHours, " +
+            "maxAltitudeClimbed, " +
+            "longestHikeKm " +
+            "FROM profiles WHERE id = :profileId")
+    HikerProfileTuple getHikerProfileDataSync(long profileId);
+
     @Query("SELECT * FROM profiles WHERE id = :profileId")
     LiveData<ProfileEntity> getProfileById(long profileId);
+
+    @Query("SELECT * FROM profiles WHERE id = :profileId")
+    ProfileEntity getProfileByIdSync(long profileId);
 
     // Tuple class with Column annotations
     class HikerProfileTuple {

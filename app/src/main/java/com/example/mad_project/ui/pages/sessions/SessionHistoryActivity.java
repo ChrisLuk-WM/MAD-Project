@@ -26,7 +26,7 @@ public class SessionHistoryActivity extends BaseActivity {
 
     @Override
     protected void initViews() {
-        recyclerView = findViewById(R.id.recycler_sessions);
+        recyclerView = findViewById(R.id.sessionsRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Create adapter with click listener

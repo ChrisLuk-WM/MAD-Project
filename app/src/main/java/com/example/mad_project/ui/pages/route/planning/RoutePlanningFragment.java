@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +27,8 @@ import com.example.mad_project.R;
 import com.example.mad_project.api.WeatherRepository;
 import com.example.mad_project.api.models.CurrentWeather;
 import com.example.mad_project.api.models.NineDayForecast;
+import com.example.mad_project.database.AppDatabase;
+import com.example.mad_project.database.dao.ProfileDao;
 import com.example.mad_project.database.entities.TrailEntity;
 import com.example.mad_project.services.HikingRecommendationHelper;
 import com.example.mad_project.services.WeatherService;
@@ -46,6 +49,7 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
     private HikingRecommendationHelper hikingRecommendationHelper;
     private long trailId;
     private TrailEntity trail;
+    private ProfileDao profileDao;
     private boolean isFragmentActive = false;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
@@ -123,6 +127,7 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
         suggestions = view.findViewById(R.id.suggestions);
         btnStartHiking = view.findViewById(R.id.btn_start_hiking);
         hikingRecommendationHelper = new HikingRecommendationHelper(requireContext());
+        profileDao = AppDatabase.getDatabase(requireContext()).profileDao();
 
         btnStartHiking.setEnabled(true);
         btnStartHiking.setOnClickListener(v -> showStartHikingDialog());
@@ -253,10 +258,6 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
     private HikingRecommendationHelper.HikingRecommendation getHikingAdvise(String weatherConditions) {
         if (weatherConditions.isEmpty()) return null;
 
-        HikingRecommendationHelper.HikerProfile averageHiker = new HikingRecommendationHelper.HikerProfile(
-                35f, 75f, 180f, 6f, 3f, 5f, 1500f, 15f
-        );
-
         HikingRecommendationHelper.TrailProfile trailProfile = new HikingRecommendationHelper.TrailProfile(
                 convertToFloat(trail.getDifficultyRating()),
                 convertToFloat(trail.getLengthRating()),
@@ -264,11 +265,46 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
         );
 
         try {
-            return hikingRecommendationHelper.getPrediction(weatherConditions, averageHiker, trailProfile);
-        } catch (Exception ignored) {
+            // Create a container for the profile data
+            final HikingRecommendationHelper.HikerProfile[] hikerProfile = new HikingRecommendationHelper.HikerProfile[1];
 
+            // Create and start the database thread
+            Thread dbThread = new Thread(() -> {
+                try {
+                    ProfileDao.HikerProfileTuple profileTuple = profileDao.getHikerProfileDataSync(1);
+                    if (profileTuple != null) {
+                        hikerProfile[0] = profileTuple.toHikerProfile();
+                    }
+                } catch (Exception e) {
+                    Log.e("WeatherCardHandler", "Database error: " + e.getMessage());
+                }
+            });
+
+            dbThread.start();
+            dbThread.join(); // Wait for the database operation to complete
+
+            // If we got a profile, use it; otherwise use default
+            if (hikerProfile[0] != null) {
+                return hikingRecommendationHelper.getPrediction(weatherConditions, hikerProfile[0], trailProfile);
+            } else {
+                // Fallback to default profile
+                HikingRecommendationHelper.HikerProfile defaultProfile = new HikingRecommendationHelper.HikerProfile(
+                        35f,   // average age
+                        75f,   // average weight in kg
+                        170f,  // average height in cm
+                        0.5f,  // medium fitness level
+                        2f,    // 2 years experience
+                        5f,    // 5 hours weekly exercise
+                        500f,  // 500m max altitude
+                        10f    // 10km longest hike
+                );
+                return hikingRecommendationHelper.getPrediction(weatherConditions, defaultProfile, trailProfile);
+            }
+        } catch (Exception e) {
+            Log.e("WeatherCardHandler", "Error in getHikingAdvise: " + e.getMessage());
+            return null;
         }
-        return null;
+
     }
 
     @SuppressLint("DefaultLocale")

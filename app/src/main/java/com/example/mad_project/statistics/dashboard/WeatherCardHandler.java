@@ -23,12 +23,16 @@ import com.example.mad_project.api.WeatherRepository;
 import com.example.mad_project.api.models.CurrentWeather;
 import com.example.mad_project.api.models.WeatherForecast;
 import com.example.mad_project.content_downloader.WeatherIconDownloader;
+import com.example.mad_project.database.AppDatabase;
+import com.example.mad_project.database.dao.ProfileDao;
+import com.example.mad_project.database.entities.ProfileEntity;
 import com.example.mad_project.sensors.SensorsController;
 import com.example.mad_project.services.HikingRecommendationHelper;
 import com.example.mad_project.services.WeatherService;
 import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.ui.pages.home.card.CardHandler;
 import com.example.mad_project.ui.pages.home.card.WeatherCardElements;
+import com.example.mad_project.utils.ProfileManager;
 import com.example.mad_project.utils.WeatherWarningUtils;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
@@ -38,6 +42,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.example.mad_project.utils.Common.dpToPx;
+
+import androidx.lifecycle.LiveData;
 
 public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUpdateListener {
     private Context context;
@@ -66,8 +72,7 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
     private SensorsController sensorsController;
 
     private HikingRecommendationHelper hikingRecommendationHelper;
-
-
+    private ProfileDao profileDao;
 
 
     public WeatherCardHandler(WeatherCardElements elements) {
@@ -93,6 +98,7 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
         iconDownloader = WeatherIconDownloader.getInstance(context);
         sensorsController = SensorsController.getInstance(context);
         hikingRecommendationHelper = new HikingRecommendationHelper(context);
+        profileDao = AppDatabase.getDatabase(context).profileDao();
 
         weatherService.addListener(this);
         setupInfoButton();
@@ -618,20 +624,46 @@ public class WeatherCardHandler implements CardHandler, WeatherService.WeatherUp
     private HikingRecommendationHelper.HikingRecommendation getHikingAdvise(String weatherConditions) {
         if (weatherConditions.isEmpty()) return null;
 
-        HikingRecommendationHelper.HikerProfile averageHiker = new HikingRecommendationHelper.HikerProfile(
-                25f, 65f, 170f, 3f, 1f, 2f, 500f, 10f
-        );
-
         try {
-            HikingRecommendationHelper.HikingRecommendation recommendation =
-                    hikingRecommendationHelper.getPrediction(weatherConditions, averageHiker);
+            // Create a container for the profile data
+            final HikingRecommendationHelper.HikerProfile[] hikerProfile = new HikingRecommendationHelper.HikerProfile[1];
 
-            return recommendation;
+            // Create and start the database thread
+            Thread dbThread = new Thread(() -> {
+                try {
+                    ProfileDao.HikerProfileTuple profileTuple = profileDao.getHikerProfileDataSync(1);
+                    if (profileTuple != null) {
+                        hikerProfile[0] = profileTuple.toHikerProfile();
+                    }
+                } catch (Exception e) {
+                    Log.e("WeatherCardHandler", "Database error: " + e.getMessage());
+                }
+            });
+
+            dbThread.start();
+            dbThread.join(); // Wait for the database operation to complete
+
+            // If we got a profile, use it; otherwise use default
+            if (hikerProfile[0] != null) {
+                return hikingRecommendationHelper.getPrediction(weatherConditions, hikerProfile[0]);
+            } else {
+                // Fallback to default profile
+                HikingRecommendationHelper.HikerProfile defaultProfile = new HikingRecommendationHelper.HikerProfile(
+                        35f,   // average age
+                        75f,   // average weight in kg
+                        170f,  // average height in cm
+                        0.5f,  // medium fitness level
+                        2f,    // 2 years experience
+                        5f,    // 5 hours weekly exercise
+                        500f,  // 500m max altitude
+                        10f    // 10km longest hike
+                );
+                return hikingRecommendationHelper.getPrediction(weatherConditions, defaultProfile);
+            }
         } catch (Exception e) {
-
+            Log.e("WeatherCardHandler", "Error in getHikingAdvise: " + e.getMessage());
+            return null;
         }
-
-        return null;
     }
 
     private MaterialCardView createWarningIconCard(Context context, String warningText) {

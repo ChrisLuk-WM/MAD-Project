@@ -30,6 +30,7 @@ import com.example.mad_project.statistics.StatisticsManager;
 import com.example.mad_project.ui.BaseActivity;
 import com.example.mad_project.utils.DownloadManager;
 import com.example.mad_project.constants.RequiredPermissions;
+import com.example.mad_project.utils.ProfileManager;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
