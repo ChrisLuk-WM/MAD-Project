@@ -5,10 +5,15 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.mad_project.R;
 import com.example.mad_project.database.entities.HikingSessionEntity;
 import com.example.mad_project.ui.BaseActivity;
+import com.example.mad_project.ui.pages.sessions.fragments.ElevationGraphFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.MapFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.SpeedGraphFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.StepsStatisticsFragment;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -40,7 +45,7 @@ public class SessionAnalysisActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         sessionId = getIntent().getLongExtra("session_id", -1);
-        String source = getIntent().getStringExtra("source"); // Add this to track source
+        String source = getIntent().getStringExtra("source");
 
         if (sessionId == -1) {
             finish();
@@ -50,13 +55,58 @@ public class SessionAnalysisActivity extends BaseActivity {
         viewModel = new ViewModelProvider(this).get(SessionViewModel.class);
         super.onCreate(savedInstanceState);
 
-        // Setup back navigation based on source
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
 
+        if (savedInstanceState == null) {
+            // Add Map Fragment
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.map_container, createMapFragment())
+                    .replace(R.id.speed_graph_container, createSpeedFragment(false))
+                    .replace(R.id.elevation_graph_container, createElevationFragment(false))
+                    .replace(R.id.steps_stats_container, createStepsFragment(false))
+                    .commit();
+        }
+
         loadSessionData();
+    }
+
+    private Fragment createMapFragment() {
+        MapFragment fragment = new MapFragment();
+        Bundle args = new Bundle();
+        args.putLong("sessionId", sessionId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    private Fragment createSpeedFragment(boolean isRealTime) {
+        SpeedGraphFragment fragment = new SpeedGraphFragment();
+        Bundle args = new Bundle();
+        args.putBoolean("isRealTime", isRealTime);
+        args.putLong("sessionId", sessionId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    private Fragment createElevationFragment(boolean isRealTime) {
+        ElevationGraphFragment fragment = new ElevationGraphFragment();
+        Bundle args = new Bundle();
+        args.putBoolean("isRealTime", isRealTime);
+        args.putLong("sessionId", sessionId);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    private Fragment createStepsFragment(boolean isRealTime) {
+        StepsStatisticsFragment fragment = new StepsStatisticsFragment();
+        Bundle args = new Bundle();
+        args.putBoolean("isRealTime", isRealTime);
+        args.putLong("sessionId", sessionId);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Override

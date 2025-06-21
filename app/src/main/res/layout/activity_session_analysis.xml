@@ -29,14 +29,13 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:orientation="vertical">
 
                 <!-- Session Information Card -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
+                    android:layout_margin="16dp"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="2dp">
 
@@ -69,15 +68,47 @@
                             android:id="@+id/text_duration"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
-                            android:textStyle="bold"/>
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/text_distance"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/text_avg_speed"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/text_steps"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"/>
+
+                        <TextView
+                            android:id="@+id/text_elevation"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"/>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Statistics Card -->
+                <!-- Map -->
+                <FrameLayout
+                    android:id="@+id/map_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:layout_marginHorizontal="16dp"
+                    android:layout_marginBottom="16dp"/>
+
+                <!-- Statistics Fragments -->
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="16dp"
                     android:layout_marginBottom="16dp"
                     app:cardCornerRadius="8dp"
                     app:cardElevation="2dp">
@@ -88,83 +119,31 @@
                         android:orientation="vertical"
                         android:padding="16dp">
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Statistics"
-                            android:textStyle="bold"
-                            android:textSize="18sp"/>
-
-                        <GridLayout
+                        <!-- Speed Graph -->
+                        <FrameLayout
+                            android:id="@+id/speed_graph_container"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:columnCount="2"
-                            android:rowCount="4"
-                            android:layout_marginTop="8dp">
+                            android:layout_height="200dp"
+                            android:layout_marginBottom="16dp"/>
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Distance: "
-                                android:textStyle="bold"
-                                android:layout_marginEnd="8dp"/>
+                        <!-- Elevation Graph -->
+                        <FrameLayout
+                            android:id="@+id/elevation_graph_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="200dp"
+                            android:layout_marginBottom="16dp"/>
 
-                            <TextView
-                                android:id="@+id/text_distance"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"/>
+                        <!-- Steps Statistics -->
+                        <FrameLayout
+                            android:id="@+id/steps_stats_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Average Speed: "
-                                android:textStyle="bold"
-                                android:layout_marginEnd="8dp"/>
-
-                            <TextView
-                                android:id="@+id/text_avg_speed"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"/>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Steps: "
-                                android:textStyle="bold"
-                                android:layout_marginEnd="8dp"/>
-
-                            <TextView
-                                android:id="@+id/text_steps"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"/>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Elevation Gain: "
-                                android:textStyle="bold"
-                                android:layout_marginEnd="8dp"/>
-
-                            <TextView
-                                android:id="@+id/text_elevation"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"/>
-                        </GridLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
-
             </LinearLayout>
         </androidx.core.widget.NestedScrollView>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:fitsSystemWindows="true"
-        app:headerLayout="@layout/nav_header"
-        app:menu="@menu/drawer_menu" />
 
 </androidx.drawerlayout.widget.DrawerLayout>

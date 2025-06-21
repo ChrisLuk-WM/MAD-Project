@@ -15,9 +15,12 @@ import com.example.mad_project.database.entities.HikingStatisticsEntity;
 
 import java.lang.ref.WeakReference;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 public class StatisticsCalculator extends Thread {
     private static volatile StatisticsCalculator instance;
@@ -31,6 +34,10 @@ public class StatisticsCalculator extends Thread {
     private WeakReference<HikingSessionEntity> currentSession; // Use WeakReference
     private static final int STATISTICS_INTERVAL = 5000; // 5 seconds
     private final float[] distanceResults = new float[1]; // Reuse array
+
+    private final Map<String, Object> statisticsCache = new ConcurrentHashMap<>();
+    private static final long CACHE_EXPIRY = 60000; // 1 minute
+    private final Map<String, Long> cacheTimestamps = new ConcurrentHashMap<>();
 
     private StatisticsCalculator(Context context) {
         super("StatisticsCalculator-Thread");
@@ -109,6 +116,17 @@ public class StatisticsCalculator extends Thread {
                 e.printStackTrace();
             }
         });
+    }
+
+    private Object getCachedValue(String key, Supplier<Object> calculator) {
+        Long timestamp = cacheTimestamps.get(key);
+        if (timestamp == null || System.currentTimeMillis() - timestamp > CACHE_EXPIRY) {
+            Object value = calculator.get();
+            statisticsCache.put(key, value);
+            cacheTimestamps.put(key, System.currentTimeMillis());
+            return value;
+        }
+        return statisticsCache.get(key);
     }
 
     @Override

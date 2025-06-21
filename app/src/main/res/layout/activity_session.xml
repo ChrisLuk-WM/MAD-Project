@@ -41,9 +41,38 @@
                     android:layout_width="match_parent"
                     android:layout_height="300dp"/>
 
-                <include
-                    android:id="@+id/session_stats"
-                    layout="@layout/layout_session_statistics"/>
+                <androidx.core.widget.NestedScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp">
+
+                        <!-- Speed Graph -->
+                        <FrameLayout
+                            android:id="@+id/speed_graph_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="200dp"
+                            android:layout_marginBottom="16dp"/>
+
+                        <!-- Elevation Graph -->
+                        <FrameLayout
+                            android:id="@+id/elevation_graph_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="200dp"
+                            android:layout_marginBottom="16dp"/>
+
+                        <!-- Steps Statistics -->
+                        <FrameLayout
+                            android:id="@+id/steps_stats_container"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+
+                    </LinearLayout>
+                </androidx.core.widget.NestedScrollView>
 
             </LinearLayout>
 

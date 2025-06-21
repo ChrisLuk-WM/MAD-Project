@@ -5,6 +5,7 @@ import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity(tableName = "hiking_sessions",
         foreignKeys = @ForeignKey(entity = TrailEntity.class,
@@ -54,5 +55,28 @@ public class HikingSessionEntity {
             return java.time.Duration.between(startTime, endTimeOrNow).toMillis();
         }
         return 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        HikingSessionEntity that = (HikingSessionEntity) o;
+
+        return id == that.id &&
+                trailId == that.trailId &&
+                steps == that.steps &&
+                Double.compare(that.distance, distance) == 0 &&
+                Double.compare(that.averageSpeed, averageSpeed) == 0 &&
+                totalElevationGain == that.totalElevationGain &&
+                Objects.equals(startTime, that.startTime) &&
+                Objects.equals(endTime, that.endTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, trailId, startTime, endTime, steps, distance,
+                averageSpeed, totalElevationGain);
     }
 }

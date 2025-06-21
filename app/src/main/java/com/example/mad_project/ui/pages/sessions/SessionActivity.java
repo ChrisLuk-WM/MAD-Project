@@ -7,6 +7,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +19,11 @@ import com.example.mad_project.database.entities.HikingSessionEntity;
 import com.example.mad_project.sensors.SensorsController;
 import com.example.mad_project.statistics.StatisticsCalculator;
 import com.example.mad_project.ui.BaseActivity;
+import com.example.mad_project.ui.pages.sessions.fragments.BaseStatisticsFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.ElevationGraphFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.MapFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.SpeedGraphFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.StepsStatisticsFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.time.LocalDateTime;
@@ -39,7 +45,6 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Initialize ViewModel before super.onCreate
         try {
             viewModel = new ViewModelProvider(this).get(SessionViewModel.class);
         } catch (Exception e) {
@@ -50,9 +55,18 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
         super.onCreate(savedInstanceState);
 
         if (savedInstanceState == null) {
+            // Add Map Fragment
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.map_container, new MapFragment())
+                    .commit();
+
+            // Add Statistics Fragments for active session
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.speed_graph_container, createSpeedFragment(true))
+                    .replace(R.id.elevation_graph_container, createElevationFragment(true))
+                    .replace(R.id.steps_stats_container, createStepsFragment(true))
                     .commit();
         }
 
@@ -73,6 +87,30 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private Fragment createSpeedFragment(boolean isRealTime) {
+        SpeedGraphFragment fragment = new SpeedGraphFragment();
+        Bundle args = new Bundle();
+        args.putBoolean("isRealTime", isRealTime);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    private Fragment createElevationFragment(boolean isRealTime) {
+        ElevationGraphFragment fragment = new ElevationGraphFragment();
+        Bundle args = new Bundle();
+        args.putBoolean("isRealTime", isRealTime);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    private Fragment createStepsFragment(boolean isRealTime) {
+        StepsStatisticsFragment fragment = new StepsStatisticsFragment();
+        Bundle args = new Bundle();
+        args.putBoolean("isRealTime", isRealTime);
+        fragment.setArguments(args);
+        return fragment;
     }
 
     private void observeSessionData() {
@@ -120,7 +158,13 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
             activeSessionView.setVisibility(View.VISIBLE);
             plannedSessionsView.setVisibility(View.GONE);
             fabEndSession.setVisibility(View.VISIBLE);
-            updateActiveSessionUI(session);
+
+            // Notify fragments about active session
+            for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+                if (fragment instanceof BaseStatisticsFragment) {
+                    ((BaseStatisticsFragment) fragment).onSessionActive(session.getId());
+                }
+            }
         }
     }
 

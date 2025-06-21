@@ -6,27 +6,46 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.mad_project.R;
 import com.example.mad_project.database.entities.HikingSessionEntity;
 import com.google.android.material.card.MaterialCardView;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
-public class SessionHistoryAdapter extends RecyclerView.Adapter<SessionHistoryAdapter.SessionViewHolder> {
-    private List<HikingSessionEntity> sessions = new ArrayList<>();
-    private OnSessionClickListener listener;
+public class SessionHistoryAdapter extends ListAdapter<HikingSessionEntity, SessionHistoryAdapter.SessionViewHolder> {
+    private final OnSessionClickListener listener;
     private static final DateTimeFormatter dateFormatter =
             DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
+
+    private static final DiffUtil.ItemCallback<HikingSessionEntity> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<HikingSessionEntity>() {
+                @Override
+                public boolean areItemsTheSame(
+                        @NonNull HikingSessionEntity oldItem,
+                        @NonNull HikingSessionEntity newItem) {
+                    return oldItem.getId() == newItem.getId();
+                }
+
+                @Override
+                public boolean areContentsTheSame(
+                        @NonNull HikingSessionEntity oldItem,
+                        @NonNull HikingSessionEntity newItem) {
+                    return oldItem.equals(newItem);
+                }
+            };
 
     public interface OnSessionClickListener {
         void onSessionClick(HikingSessionEntity session);
     }
 
+
+
     public SessionHistoryAdapter(OnSessionClickListener listener) {
+        super(DIFF_CALLBACK);
         this.listener = listener;
     }
 
@@ -40,18 +59,7 @@ public class SessionHistoryAdapter extends RecyclerView.Adapter<SessionHistoryAd
 
     @Override
     public void onBindViewHolder(@NonNull SessionViewHolder holder, int position) {
-        holder.bind(sessions.get(position));
-    }
-
-    @Override
-    public int getItemCount() {
-        return sessions.size();
-    }
-
-    public void updateSessions(List<HikingSessionEntity> newSessions) {
-        sessions.clear();
-        sessions.addAll(newSessions);
-        notifyDataSetChanged();
+        holder.bind(getItem(position));
     }
 
     class SessionViewHolder extends RecyclerView.ViewHolder {
@@ -71,7 +79,6 @@ public class SessionHistoryAdapter extends RecyclerView.Adapter<SessionHistoryAd
             elevationGainText = itemView.findViewById(R.id.text_elevation_gain);
             analysisButton = itemView.findViewById(R.id.btn_analysis);
         }
-
 
         void bind(HikingSessionEntity session) {
             dateText.setText(session.getStartTime().format(dateFormatter));

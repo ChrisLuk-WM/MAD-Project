@@ -1,4 +1,4 @@
-package com.example.mad_project.ui.pages.sessions;
+package com.example.mad_project.ui.pages.sessions.fragments;
 
 import android.content.Context;
 import android.location.Location;
@@ -26,7 +26,6 @@ import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MapFragment extends Fragment {

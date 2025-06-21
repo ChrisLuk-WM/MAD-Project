@@ -63,7 +63,6 @@ public class HikingSessionRepository {
         return result;
     }
 
-    // Existing methods...
     public LiveData<List<HikingSessionEntity>> getAllSessions() {
         return hikingSessionDao.getAllSessions();
     }

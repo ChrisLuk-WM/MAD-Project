@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.mad_project.R;
 import com.example.mad_project.database.entities.HikingSessionEntity;
 import com.example.mad_project.ui.BaseActivity;
+import com.example.mad_project.ui.pages.sessions.fragments.MapFragment;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
