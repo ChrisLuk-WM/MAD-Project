@@ -2,21 +2,35 @@ package com.example.mad_project.ui.pages.sessions;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.Toolbar;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.example.mad_project.R;
+import com.example.mad_project.database.entities.HikingSessionEntity;
+import com.example.mad_project.sensors.SensorsController;
+import com.example.mad_project.statistics.StatisticsCalculator;
 import com.example.mad_project.ui.BaseActivity;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-public class SessionActivity extends BaseActivity {
+import java.time.LocalDateTime;
+
+public class SessionActivity extends BaseActivity implements PlannedSessionAdapter.OnSessionActionListener {
     private MapFragment mapFragment;
-    private TextView textDuration;
-    private TextView textDistance;
-    private TextView textSpeed;
-    private TextView textAvgSpeed;
-    private TextView textElevation;
-    private TextView textElevationGain;
+    private SessionViewModel viewModel;
+    private View activeSessionView;
+    private View plannedSessionsView;
+    private FloatingActionButton fabEndSession;
+    private RecyclerView plannedSessionsRecycler;
+    private PlannedSessionAdapter plannedSessionsAdapter;
+    private TextView emptyView;
 
     @Override
     protected int getLayoutResourceId() {
@@ -25,34 +39,168 @@ public class SessionActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Initialize ViewModel before super.onCreate
+        try {
+            viewModel = new ViewModelProvider(this).get(SessionViewModel.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.d("SessionActivity", e.getMessage());
+        }
+
         super.onCreate(savedInstanceState);
+
         if (savedInstanceState == null) {
             getSupportFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.map_container, MapFragment.class, null)
+                    .replace(R.id.map_container, new MapFragment())
                     .commit();
         }
+
+        observeSessionData();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        super.onCreateOptionsMenu(menu); // Call super to handle common menu items
+        getMenuInflater().inflate(R.menu.menu_session, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_history) {
+            openSessionHistory();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void observeSessionData() {
+        // Observe active session
+        viewModel.getActiveSession().observe(this, session -> {
+            if (session != null) {
+                showActiveSession(session);
+            } else {
+                showPlannedSessions();
+            }
+        });
     }
 
     @Override
     protected void initViews() {
-        textDuration = findViewById(R.id.text_duration);
-        textDistance = findViewById(R.id.text_distance);
-        textSpeed = findViewById(R.id.text_speed);
-        textAvgSpeed = findViewById(R.id.text_avg_speed);
-        textElevation = findViewById(R.id.text_elevation);
-        textElevationGain = findViewById(R.id.text_elevation_gain);
+        activeSessionView = findViewById(R.id.active_session_layout);
+        plannedSessionsView = findViewById(R.id.planned_sessions_layout);
+        fabEndSession = findViewById(R.id.fab_end_session);
+        plannedSessionsRecycler = findViewById(R.id.planned_sessions_recycler);
+        emptyView = findViewById(R.id.empty_view);
+
+        // Setup RecyclerView
+        plannedSessionsAdapter = new PlannedSessionAdapter(this);
+        plannedSessionsRecycler.setLayoutManager(new LinearLayoutManager(this));
+        plannedSessionsRecycler.setAdapter(plannedSessionsAdapter);
+
+        // Setup FAB
+        fabEndSession.setOnClickListener(v -> endCurrentSession());
+
+        Toolbar toolbar = findViewById(R.id.toolbar_layout);
+        if (toolbar != null) {
+            toolbar.inflateMenu(R.menu.menu_session);
+            toolbar.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == R.id.action_history) {
+                    openSessionHistory();
+                    return true;
+                }
+                return false;
+            });
+        }
+    }
+
+    private void showActiveSession(HikingSessionEntity session) {
+        if (activeSessionView != null && plannedSessionsView != null && fabEndSession != null) {
+            activeSessionView.setVisibility(View.VISIBLE);
+            plannedSessionsView.setVisibility(View.GONE);
+            fabEndSession.setVisibility(View.VISIBLE);
+            updateActiveSessionUI(session);
+        }
+    }
+
+    private void openSessionHistory() {
+        Intent intent = new Intent(this, SessionHistoryActivity.class);
+        startActivity(intent);
+    }
+
+
+    private void showPlannedSessions() {
+        if (activeSessionView != null && plannedSessionsView != null && fabEndSession != null) {
+            activeSessionView.setVisibility(View.GONE);
+            plannedSessionsView.setVisibility(View.VISIBLE);
+            fabEndSession.setVisibility(View.GONE);
+            loadPlannedSessions();
+        }
+    }
+
+    private void updateActiveSessionUI(HikingSessionEntity session) {
+        // Update statistics views based on your layout_session_statistics
+        // This will be implemented later
+    }
+
+    private void loadPlannedSessions() {
+        if (viewModel != null) {
+            viewModel.getPlannedSessions().observe(this, sessions -> {
+                if (plannedSessionsAdapter != null && emptyView != null && plannedSessionsRecycler != null) {
+                    plannedSessionsAdapter.updateSessions(sessions);
+
+                    // Show/hide empty view
+                    if (sessions == null || sessions.isEmpty()) {
+                        emptyView.setVisibility(View.VISIBLE);
+                        plannedSessionsRecycler.setVisibility(View.GONE);
+                    } else {
+                        emptyView.setVisibility(View.GONE);
+                        plannedSessionsRecycler.setVisibility(View.VISIBLE);
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onStartSession(HikingSessionEntity session) {
+        if (viewModel != null) {
+            session.setStartTime(LocalDateTime.now());
+            viewModel.updateSession(session);
+
+            // Start tracking with sensors and statistics
+            SensorsController.getInstance(this).startTracking();
+            StatisticsCalculator.getInstance(this).startSession();
+        }
+    }
+
+    private void endCurrentSession() {
+        if (viewModel != null) {
+            SensorsController.getInstance(this).stopTracking();
+
+            viewModel.endCurrentSession().observe(this, sessionId -> {
+                if (sessionId != null) {
+                    Intent intent = new Intent(this, SessionAnalysisActivity.class);
+                    intent.putExtra("session_id", sessionId);
+                    intent.putExtra("source", "session"); // Add source
+                    startActivity(intent);
+                    finish();
+                }
+            });
+        }
     }
 
     @Override
     protected void setupActions() {
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        toolbar.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.action_history) {
-                startActivity(new Intent(this, SessionHistoryActivity.class));
-                return true;
-            }
-            return false;
-        });
+        // No additional actions needed
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (viewModel != null) {
+            observeSessionData();
+        }
     }
 }

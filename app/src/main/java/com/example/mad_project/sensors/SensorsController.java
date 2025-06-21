@@ -88,6 +88,8 @@ public class SensorsController {
         statisticsManager.stopSession();
         // Stop statistics calculation
         statisticsCalculator.stopSession();
+        resetAllSensors();
+
         updateTrackingStatus(false);
     }
 

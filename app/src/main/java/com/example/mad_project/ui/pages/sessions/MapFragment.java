@@ -1,28 +1,45 @@
 package com.example.mad_project.ui.pages.sessions;
 
 import android.content.Context;
+import android.location.Location;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+
 import com.example.mad_project.R;
+import com.example.mad_project.statistics.StatisticsManager;
+import com.example.mad_project.statistics.StatisticsType;
+
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Polyline;
+import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
+import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class MapFragment extends Fragment {
     private MapView map;
-    private static final double DEFAULT_LAT = 1.3521; // Singapore latitude
-    private static final double DEFAULT_LON = 103.8198; // Singapore longitude
-    private static final double DEFAULT_ZOOM = 12.0;
+    private MyLocationNewOverlay locationOverlay;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable locationUpdateRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateLocation();
+            handler.postDelayed(this, 1000); // Update every second
+        }
+    };
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -42,7 +59,6 @@ public class MapFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         map = view.findViewById(R.id.map);
         setupMap();
     }
@@ -50,10 +66,31 @@ public class MapFragment extends Fragment {
     private void setupMap() {
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setMultiTouchControls(true);
+        map.getController().setZoom(18.0); // Closer zoom for hiking
 
-        // Set initial position
-        map.getController().setZoom(DEFAULT_ZOOM);
-        map.getController().setCenter(new GeoPoint(DEFAULT_LAT, DEFAULT_LON));
+        // Setup location overlay
+        locationOverlay = new MyLocationNewOverlay(new GpsMyLocationProvider(requireContext()), map);
+        locationOverlay.enableMyLocation();
+        locationOverlay.enableFollowLocation();
+        map.getOverlays().add(locationOverlay);
+
+        // Initial location from StatisticsManager
+        updateLocation();
+    }
+
+    private void updateLocation() {
+        if (!isAdded()) return;
+
+        StatisticsManager statisticsManager = StatisticsManager.getInstance();
+        Location location = statisticsManager.getValue(StatisticsType.LOCATION);
+
+        if (location != null) {
+            GeoPoint point = new GeoPoint(location.getLatitude(), location.getLongitude());
+            map.getController().animateTo(point);
+
+            // Update location overlay
+            locationOverlay.onLocationChanged(location, null);
+        }
     }
 
     public void drawPath(List<GeoPoint> points) {
@@ -65,11 +102,6 @@ public class MapFragment extends Fragment {
 
             map.getOverlays().add(line);
             map.invalidate();
-
-            // Center on path
-            if (points.size() > 0) {
-                map.getController().setCenter(points.get(0));
-            }
         }
     }
 
@@ -77,11 +109,19 @@ public class MapFragment extends Fragment {
     public void onResume() {
         super.onResume();
         map.onResume();
+        handler.post(locationUpdateRunnable);
     }
 
     @Override
     public void onPause() {
         super.onPause();
         map.onPause();
+        handler.removeCallbacks(locationUpdateRunnable);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        handler.removeCallbacks(locationUpdateRunnable);
     }
 }

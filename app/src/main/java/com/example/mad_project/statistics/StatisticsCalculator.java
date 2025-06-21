@@ -72,7 +72,7 @@ public class StatisticsCalculator extends Thread {
 
     private HikingSessionEntity findActiveSession() {
         // Find session with no end time
-        return sessionDao.getActiveSession();
+        return sessionDao.getActiveSessionSync();
     }
 
     private HikingSessionEntity createNewSession() {

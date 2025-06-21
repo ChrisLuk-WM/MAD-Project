@@ -85,6 +85,12 @@
             android:exported="false"
             android:parentActivityName=".ui.pages.sessions.SessionActivity"/>
 
+        <activity
+            android:name=".ui.pages.sessions.SessionAnalysisActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.pages.sessions.SessionActivity"/>
+
+
     </application>
 
 </manifest>

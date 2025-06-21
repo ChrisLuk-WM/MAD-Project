@@ -3,6 +3,7 @@ package com.example.mad_project.ui.pages.sessions;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -59,6 +60,7 @@ public class SessionHistoryAdapter extends RecyclerView.Adapter<SessionHistoryAd
         private final TextView durationText;
         private final TextView distanceText;
         private final TextView elevationGainText;
+        private final Button analysisButton;
 
         SessionViewHolder(View itemView) {
             super(itemView);
@@ -67,17 +69,25 @@ public class SessionHistoryAdapter extends RecyclerView.Adapter<SessionHistoryAd
             durationText = itemView.findViewById(R.id.text_duration);
             distanceText = itemView.findViewById(R.id.text_distance);
             elevationGainText = itemView.findViewById(R.id.text_elevation_gain);
+            analysisButton = itemView.findViewById(R.id.btn_analysis);
         }
+
 
         void bind(HikingSessionEntity session) {
             dateText.setText(session.getStartTime().format(dateFormatter));
             durationText.setText(formatDuration(session.getDuration()));
             distanceText.setText(String.format(Locale.getDefault(),
-                    "%.2f km", session.getDistance() / 1000));
+                    "%.2f km", session.getDistance() / 1000.0));
             elevationGainText.setText(String.format(Locale.getDefault(),
-                    "%.0f m", session.getTotalElevationGain()));
+                    "%d m", session.getTotalElevationGain()));
 
             cardView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onSessionClick(session);
+                }
+            });
+
+            analysisButton.setOnClickListener(v -> {
                 if (listener != null) {
                     listener.onSessionClick(session);
                 }

@@ -2,6 +2,7 @@ package com.example.mad_project.ui.pages.sessions;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.MenuItem;
 
 import androidx.appcompat.widget.Toolbar;
 import androidx.lifecycle.ViewModelProvider;
@@ -18,9 +19,25 @@ public class SessionHistoryActivity extends BaseActivity {
     private SessionViewModel viewModel;
 
     @Override
+    protected int getLayoutResourceId() {
+        return R.layout.activity_session_history;
+    }
+
+    @Override
+    protected boolean useNavigationDrawer() {
+        return false; // Disable navigation drawer for this activity
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
         viewModel = new ViewModelProvider(this).get(SessionViewModel.class);
+        super.onCreate(savedInstanceState);
+
+        // Set title
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle("Session History");
+        }
+
         observeSessions();
     }
 
@@ -29,13 +46,11 @@ public class SessionHistoryActivity extends BaseActivity {
         recyclerView = findViewById(R.id.sessionsRecyclerView);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-        // Create adapter with click listener
-        adapter = new SessionHistoryAdapter(new SessionHistoryAdapter.OnSessionClickListener() {
-            @Override
-            public void onSessionClick(HikingSessionEntity session) {
-                // Handle session click
-                showSessionDetails(session);
-            }
+        adapter = new SessionHistoryAdapter(session -> {
+            Intent intent = new Intent(this, SessionAnalysisActivity.class);
+            intent.putExtra("session_id", session.getId());
+            intent.putExtra("source", "history");
+            startActivity(intent);
         });
 
         recyclerView.setAdapter(adapter);
@@ -49,24 +64,17 @@ public class SessionHistoryActivity extends BaseActivity {
         });
     }
 
-    private void showSessionDetails(HikingSessionEntity session) {
-        // Navigate to session details activity
-        Intent intent = new Intent(this, SessionDetailsActivity.class);
-        intent.putExtra("session_id", session.getId());
-        startActivity(intent);
-    }
-
     @Override
     protected void setupActions() {
-        // Setup toolbar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        if (toolbar != null) {
-            toolbar.setNavigationOnClickListener(v -> onBackPressed());
-        }
+        // Back button handling is automatic through BaseActivity
     }
 
     @Override
-    protected int getLayoutResourceId() {
-        return R.layout.activity_session_history;
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
