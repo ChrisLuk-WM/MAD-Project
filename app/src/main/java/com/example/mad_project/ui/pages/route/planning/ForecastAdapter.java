@@ -141,6 +141,13 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
         notifyItemChanged(selectedPosition);
     }
 
+    public ForecastItem getSelectedItem() {
+        if (selectedPosition >= 0 && selectedPosition < items.size()) {
+            return items.get(selectedPosition);
+        }
+        return null;
+    }
+
     public enum RecommendationStatus {
         RECOMMENDED,
         CAUTION,

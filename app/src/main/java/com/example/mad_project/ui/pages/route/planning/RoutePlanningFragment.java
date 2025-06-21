@@ -5,14 +5,18 @@ import static com.example.mad_project.utils.Common.convertToFloat;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -29,10 +33,13 @@ import com.example.mad_project.api.models.CurrentWeather;
 import com.example.mad_project.api.models.NineDayForecast;
 import com.example.mad_project.database.AppDatabase;
 import com.example.mad_project.database.dao.ProfileDao;
+import com.example.mad_project.database.entities.HikingSessionEntity;
 import com.example.mad_project.database.entities.TrailEntity;
 import com.example.mad_project.services.HikingRecommendationHelper;
 import com.example.mad_project.services.WeatherService;
 import com.example.mad_project.ui.pages.route.RouteDetailsViewModel;
+import com.example.mad_project.utils.OfflineMapDownloadListener;
+import com.example.mad_project.utils.OfflineMapStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -250,7 +257,7 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
     @Override
     public void onForecastSelected(ForecastItem item, int position) {
         adapter.setSelectedPosition(position);
-//        btnStartHiking.setEnabled(position == 0);
+        btnStartHiking.setEnabled(true);
         updateWeatherDetails(item);
         updateSuggestions(item);
     }
@@ -335,15 +342,125 @@ public class RoutePlanningFragment extends Fragment implements ForecastAdapter.O
     }
 
     private void showStartHikingDialog() {
-        // TODO: Add selected date to dialog message
+        // Get selected forecast date from adapter
+        ForecastItem selectedForecast = adapter.getSelectedItem();
+        if (selectedForecast == null) return;
+
         new AlertDialog.Builder(requireContext())
-                .setTitle("Start Hiking")
-                .setMessage("Are you ready to start hiking?")
-                .setPositiveButton("Start", (dialog, which) -> {
-                    viewModel.startHiking(requireContext());
-                    requireActivity().finish();
+                .setTitle("Plan Hiking")
+                .setMessage("Do you want to plan a hiking session for " + selectedForecast.getDate() + "?")
+                .setPositiveButton("Plan", (dialog, which) -> {
+                    createPlannedHikingSession(selectedForecast);
                 })
                 .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void createPlannedHikingSession(ForecastItem selectedForecast) {
+        // Create new hiking session
+        HikingSessionEntity session = new HikingSessionEntity();
+        session.setTrailId(trail.getId());
+        // Don't set start and end time yet - they will be null for planned sessions
+
+        // Insert session in background thread
+        new Thread(() -> {
+            try {
+                long sessionId = AppDatabase.getDatabase(requireContext())
+                        .hikingSessionDao()
+                        .insert(session);
+
+                // After creating session, start downloading map
+                mainHandler.post(() -> startOfflineMapDownload(sessionId));
+            } catch (Exception e) {
+                Log.e("RoutePlanningFragment", "Error creating session: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    private void startOfflineMapDownload(long sessionId) {
+        // Create and show progress dialog
+        AlertDialog progressDialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Downloading Offline Map")
+                .setMessage("Preparing download...")
+                .setCancelable(false)
+                .create();
+
+        // Add a progress bar
+        ProgressBar progressBar = new ProgressBar(requireContext(), null,
+                android.R.attr.progressBarStyleHorizontal);
+        progressBar.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        progressBar.setPadding(48, 24, 48, 0); // Add some padding
+
+        // Create text view for status
+        TextView statusText = new TextView(requireContext());
+        statusText.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        statusText.setPadding(48, 24, 48, 24);
+        statusText.setGravity(Gravity.CENTER);
+
+        // Add warning text
+        TextView warningText = new TextView(requireContext());
+        warningText.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        warningText.setPadding(48, 0, 48, 24);
+        warningText.setTextColor(Color.RED);
+        warningText.setText("Please do not close the app while downloading");
+        warningText.setGravity(Gravity.CENTER);
+
+        // Create container layout
+        LinearLayout container = new LinearLayout(requireContext());
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.addView(progressBar);
+        container.addView(statusText);
+        container.addView(warningText);
+
+        progressDialog.setView(container);
+        progressDialog.show();
+
+        // Initialize offline map storage
+        OfflineMapStorage mapStorage = new OfflineMapStorage(requireContext());
+        mapStorage.setDownloadListener(new OfflineMapDownloadListener() {
+            @Override
+            public void onDownloadProgress(int completedTiles, int totalTiles, String currentTask) {
+                if (!isAdded()) return;
+                mainHandler.post(() -> {
+                    if (!isAdded()) return;
+                    int progressPercent = (totalTiles > 0) ? (completedTiles * 100) / totalTiles : 0;
+                    progressBar.setProgress(progressPercent);
+                    statusText.setText(currentTask);
+                });
+            }
+
+            @Override
+            public void onDownloadComplete() {
+            }
+
+            @Override
+            public void onDownloadError(String error) {
+                // Leaving empty as per requirement
+            }
+
+            @Override
+            public void onTileDownloaded(int zoom, int x, int y) {
+                // Optional handling
+            }
+        });
+
+        // Start download
+        mapStorage.downloadOfflineMapForTrail(trail, 12, 15); // min zoom 12, max zoom 16
+    }
+
+    private void showDownloadCompleteDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Download Complete")
+                .setMessage("Offline map has been downloaded successfully. You can now start hiking when you're ready.")
+                .setPositiveButton("OK", (dialog, which) -> {
+                    requireActivity().finish();
+                })
                 .show();
     }
 }

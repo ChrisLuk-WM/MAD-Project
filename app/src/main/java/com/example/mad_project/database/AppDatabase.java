@@ -13,6 +13,7 @@ import com.example.mad_project.database.converters.LocalDateTimeConverter;
 import com.example.mad_project.database.dao.EmergencyContactDao;
 import com.example.mad_project.database.dao.HikingSessionDao;
 import com.example.mad_project.database.dao.HikingStatisticsDao;
+import com.example.mad_project.database.dao.OfflineMapDao;
 import com.example.mad_project.database.dao.ProfileDao;
 import com.example.mad_project.database.dao.TrailDao;
 import com.example.mad_project.database.dao.TrailImageDao;
@@ -20,6 +21,8 @@ import com.example.mad_project.database.dao.WeatherHistoryDao;
 import com.example.mad_project.database.entities.EmergencyContactEntity;
 import com.example.mad_project.database.entities.HikingSessionEntity;
 import com.example.mad_project.database.entities.HikingStatisticsEntity;
+import com.example.mad_project.database.entities.OfflineMapMetadata;
+import com.example.mad_project.database.entities.OfflineMapTileEntity;
 import com.example.mad_project.database.entities.ProfileEntity;
 import com.example.mad_project.database.entities.TrailEntity;
 import com.example.mad_project.database.entities.TrailImage;
@@ -33,9 +36,11 @@ import com.example.mad_project.database.entities.WeatherHistoryEntity;
                 HikingStatisticsEntity.class,
                 ProfileEntity.class,
                 EmergencyContactEntity.class,
-                WeatherHistoryEntity.class
+                WeatherHistoryEntity.class,
+                OfflineMapTileEntity.class,
+                OfflineMapMetadata.class
         },
-        version = 6,
+        version = 7,
         exportSchema = false
 )
 @TypeConverters({LocalDateTimeConverter.class})
@@ -50,6 +55,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract ProfileDao profileDao();
     public abstract EmergencyContactDao emergencyContactDao();
     public abstract WeatherHistoryDao weatherHistoryDao();
+    public abstract OfflineMapDao offlineMapDao();
 
     // Database creation callback
     private static final RoomDatabase.Callback roomCallback = new RoomDatabase.Callback() {

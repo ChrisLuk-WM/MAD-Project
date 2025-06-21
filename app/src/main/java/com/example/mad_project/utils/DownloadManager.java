@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.BlockingQueue;
@@ -235,6 +237,35 @@ public class DownloadManager {
 
     public void setDownloadCallback(DownloadCallback callback) {
         this.downloadCallback = callback;
+    }
+
+    public void downloadFile(String url, File destination, Long resumePosition, Map<String, String> headers) {
+        Map<String, String> defaultHeaders = new HashMap<>();
+        defaultHeaders.put("User-Agent", "HikingApp/1.0 (Android; contact@yourdomain.com)");
+
+        if (headers != null) {
+            defaultHeaders.putAll(headers);
+        }
+
+        try {
+            HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+
+            // Add all headers
+            for (Map.Entry<String, String> header : defaultHeaders.entrySet()) {
+                connection.setRequestProperty(header.getKey(), header.getValue());
+            }
+
+            if (activeDownloads.containsKey(url)) {
+                Log.d(TAG, "Download already in progress: " + url);
+                return;
+            }
+            DownloadRequest request = new DownloadRequest(url, destination, resumePosition);
+            downloadQueue.put(request);
+        } catch (IOException e) {
+            // Handle exception
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Failed to add download to queue: " + url, e);
+        }
     }
 
     public void downloadFile(String url, File destination, Long resumePosition) {
