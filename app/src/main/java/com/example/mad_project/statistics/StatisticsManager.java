@@ -22,6 +22,7 @@ public class StatisticsManager {
     // Default location (Hong Kong Observatory)
     private static final double DEFAULT_LAT = 22.3020;
     private static final double DEFAULT_LON = 114.1740;
+    private static boolean isInitialized = false;
 
     private StatisticsManager(Context context) {
         statistics = new EnumMap<>(StatisticsType.class);
@@ -31,6 +32,11 @@ public class StatisticsManager {
 
     public static void init(Context context) {
         applicationContext = context.getApplicationContext();
+
+        if (instance == null) {
+            instance = new StatisticsManager(context);
+            isInitialized = true;
+        }
     }
 
     private void initializeDefaultValues() {
@@ -39,7 +45,15 @@ public class StatisticsManager {
         }
     }
 
+    public static boolean isInitialized() {
+        return isInitialized;
+    }
+
     public static StatisticsManager getInstance() {
+        if (!isInitialized) {
+            throw new IllegalStateException("Call StatisticsManager.init(Context) first");
+        }
+
         if (instance == null) {
             synchronized (StatisticsManager.class) {
                 if (instance == null) {

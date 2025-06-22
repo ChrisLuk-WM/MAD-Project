@@ -30,6 +30,7 @@
 
     <application
         android:allowBackup="true"
+        android:name=".MADApplication"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -43,7 +44,7 @@
 
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
-            android:foregroundServiceType="location|specialUse"
+            android:foregroundServiceType="location"
             android:exported="false" />
 
         <activity
@@ -91,6 +92,16 @@
             android:parentActivityName=".ui.pages.sessions.SessionActivity"/>
 
 
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
     </application>
 
 </manifest>

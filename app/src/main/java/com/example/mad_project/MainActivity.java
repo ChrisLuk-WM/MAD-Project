@@ -22,6 +22,8 @@ import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.work.Configuration;
+import androidx.work.WorkManager;
 
 import com.example.mad_project.content_downloader.HikingTrailImageDownloader;
 import com.example.mad_project.database.AppDatabase;
@@ -37,23 +39,75 @@ public class MainActivity extends BaseActivity {
     private HikingTrailImageDownloader imageDownloader;
     private NavController navController;
     private SensorsController sensorsController;
+    private boolean coreComponentsInitialized = false;
 
 
     // Core component initialization and signal handling
     private void initCoreComponents() {
-        // Initialize database and downloader
-        AppDatabase.getDatabase(this);
-        imageDownloader = new HikingTrailImageDownloader(this);
+        try {
+            // Initialize database and downloader
+            AppDatabase.getDatabase(this);
+            imageDownloader = new HikingTrailImageDownloader(this);
 
-        DownloadManager.getInstance(this);
-        sensorsController = SensorsController.getInstance(this);
+            DownloadManager.getInstance(this);
+
+            // Make sure StatisticsManager is initialized before SensorsController
+            if (!StatisticsManager.isInitialized()) {
+                StatisticsManager.init(this);
+            }
+
+            sensorsController = SensorsController.getInstance(this);
+            coreComponentsInitialized = true;
+
+            // Check if we need to start tracking immediately
+            if (StatisticsManager.getInstance().isSessionActive()) {
+                sensorsController.startTracking();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing core components", e);
+            showInitializationErrorDialog();
+        }
+    }
+
+    private void showInitializationErrorDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("Initialization Error")
+                .setMessage("Failed to initialize app components. Please restart the app.")
+                .setPositiveButton("Restart", (dialog, which) -> {
+                    // Restart the app
+                    Intent intent = getPackageManager()
+                            .getLaunchIntentForPackage(getPackageName());
+                    if (intent != null) {
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        startActivity(intent);
+                    }
+                    finish();
+                })
+                .setNegativeButton("Exit", (dialog, which) -> finish())
+                .setCancelable(false)
+                .show();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Initialize StatisticsManager first
         StatisticsManager.init(getApplicationContext());
-        onCheckRequestPermissions();
+
+        // Initialize SensorsController early
+        try {
+            sensorsController = SensorsController.getInstance(this);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to initialize SensorsController", e);
+        }
+
+        // Check permissions and initialize other components
+        if (checkAllPermissionsGranted()) {
+            initCoreComponents();
+        } else {
+            onCheckRequestPermissions();
+        }
 
         Toolbar toolbar = findViewById(R.id.toolbar_layout);
         setSupportActionBar(toolbar);
@@ -67,6 +121,16 @@ public class MainActivity extends BaseActivity {
                     .build();
             NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         }
+    }
+
+    private boolean checkAllPermissionsGranted() {
+        for (String permission : RequiredPermissions.getRequiredPermissions()) {
+            if (ActivityCompat.checkSelfPermission(this, permission)
+                    != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
     }
 
 
@@ -109,10 +173,8 @@ public class MainActivity extends BaseActivity {
             }
 
             if (!allGranted) {
-                // Handle permission denial
                 showPermissionDeniedDialog();
             } else {
-                // All permissions granted, proceed with initialization
                 initCoreComponents();
             }
         }
@@ -174,9 +236,15 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (StatisticsManager.getInstance().isSessionActive()) {
-            // Ensure services are running
-            sensorsController.startTracking();
+        // Only try to start tracking if core components are initialized
+        if (coreComponentsInitialized &&
+                StatisticsManager.getInstance().isSessionActive() &&
+                sensorsController != null) {
+            try {
+                sensorsController.startTracking();
+            } catch (Exception e) {
+                Log.e(TAG, "Error starting tracking in onResume", e);
+            }
         }
     }
 

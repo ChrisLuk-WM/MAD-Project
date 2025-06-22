@@ -35,40 +35,74 @@ public class TrackingWorker extends Worker {
 
     private final Context context;
     private final NotificationManager notificationManager;
-    private final SensorsController sensorsController;
-    private final StatisticsManager statisticsManager;
+    private SensorsController sensorsController;
+    private StatisticsManager statisticsManager;
 
     public TrackingWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
-        this.context = context;
+        this.context = context.getApplicationContext();
         this.notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        this.sensorsController = SensorsController.getInstance(context);
-        this.statisticsManager = StatisticsManager.getInstance();
         this.mainHandler = new Handler(Looper.getMainLooper());
-
         createNotificationChannel();
     }
+
+
+    private void initializeManagers() {
+        if (!StatisticsManager.isInitialized()) {
+            StatisticsManager.init(context);
+        }
+        statisticsManager = StatisticsManager.getInstance();
+        sensorsController = SensorsController.getInstance(context);
+    }
+
+
 
 
     @NonNull
     @Override
     public Result doWork() {
+        android.util.Log.d("TrackingWorker", "Starting work execution");
+
         try {
-            // Start as foreground service
-            setForegroundAsync(createForegroundInfo()).get();
+            // Initialize managers first
+            initializeManagers();
 
-            // Start sensor tracking
-            sensorsController.startTracking();
+            // Set as foreground service immediately
+            ForegroundInfo foregroundInfo = createForegroundInfo();
+            setForegroundAsync(foregroundInfo).get();
 
+            // Start tracking on main thread
+            mainHandler.post(() -> {
+                try {
+                    if (sensorsController != null) {
+                        sensorsController.startTracking();
+                        android.util.Log.d("TrackingWorker", "Sensor tracking started");
+                    }
+                } catch (Exception e) {
+                    android.util.Log.e("TrackingWorker", "Error starting sensors", e);
+                }
+            });
+
+            // Keep the worker alive
             while (isRunning && !isStopped()) {
-                // Update notification
-                setForegroundAsync(createForegroundInfo());
-                Thread.sleep(1000);
+                try {
+                    // Update notification
+                    setForegroundAsync(createForegroundInfo()).get();
+
+                    // Log status periodically
+                    android.util.Log.d("TrackingWorker", "Worker still running...");
+
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    android.util.Log.e("TrackingWorker", "Worker interrupted", e);
+                    isRunning = false;
+                }
             }
 
             return Result.success();
         } catch (Exception e) {
-            return Result.failure();
+            android.util.Log.e("TrackingWorker", "Worker failed", e);
+            return Result.retry();
         }
     }
 
@@ -80,8 +114,7 @@ public class TrackingWorker extends Worker {
             return new ForegroundInfo(
                     NOTIFICATION_ID,
                     notification,
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION |
-                            ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
             );
         }
 
@@ -169,15 +202,20 @@ public class TrackingWorker extends Worker {
 
     @Override
     public void onStopped() {
-        super.onStopped();
+        android.util.Log.d("TrackingWorker", "Worker stopped");
         isRunning = false;
-        // Use mainHandler to ensure we're on the main thread
+
         mainHandler.post(() -> {
             try {
-                sensorsController.stopTracking();
+                if (sensorsController != null) {
+                    sensorsController.stopTracking();
+                    android.util.Log.d("TrackingWorker", "Sensors stopped");
+                }
             } catch (Exception e) {
-                e.printStackTrace();
+                android.util.Log.e("TrackingWorker", "Error stopping sensors", e);
             }
         });
+
+        super.onStopped();
     }
 }
