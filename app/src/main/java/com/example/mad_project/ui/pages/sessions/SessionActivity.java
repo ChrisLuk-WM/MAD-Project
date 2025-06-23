@@ -225,9 +225,16 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
 
             viewModel.endCurrentSession().observe(this, sessionId -> {
                 if (sessionId != null) {
+                    // Stop any ongoing updates in fragments
+                    for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+                        if (fragment instanceof BaseStatisticsFragment) {
+                            ((BaseStatisticsFragment) fragment).onDestroyView();
+                        }
+                    }
+
                     Intent intent = new Intent(this, SessionAnalysisActivity.class);
                     intent.putExtra("session_id", sessionId);
-                    intent.putExtra("source", "session"); // Add source
+                    intent.putExtra("source", "session");
                     startActivity(intent);
                     finish();
                 }

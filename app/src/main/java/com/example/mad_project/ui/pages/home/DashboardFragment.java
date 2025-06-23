@@ -24,7 +24,7 @@ import java.util.List;
 
 public class DashboardFragment extends Fragment {
     private WeatherCardHandler weatherHandler;
-    private ActivityCardHandler activityHandler;
+//    private ActivityCardHandler activityHandler;
     private HealthCardHandler healthHandler;
 
     // Weather section
@@ -83,17 +83,17 @@ public class DashboardFragment extends Fragment {
         weatherHandler = new WeatherCardHandler(weatherElements);
 
         // Initialize activity card
-        View activityCard = view.findViewById(R.id.activity_card);
-        ActivityCardElements activityElements = new ActivityCardElements(
-                activityCard,
-                activityCard.findViewById(R.id.progress_steps),
-                activityCard.findViewById(R.id.text_steps),
-                activityCard.findViewById(R.id.text_steps_goal),
-                activityCard.findViewById(R.id.text_distance),
-                activityCard.findViewById(R.id.text_calories),
-                activityCard.findViewById(R.id.text_active_time)
-        );
-        activityHandler = new ActivityCardHandler(activityElements);
+//        View activityCard = view.findViewById(R.id.activity_card);
+//        ActivityCardElements activityElements = new ActivityCardElements(
+//                activityCard,
+//                activityCard.findViewById(R.id.progress_steps),
+//                activityCard.findViewById(R.id.text_steps),
+//                activityCard.findViewById(R.id.text_steps_goal),
+//                activityCard.findViewById(R.id.text_distance),
+//                activityCard.findViewById(R.id.text_calories),
+//                activityCard.findViewById(R.id.text_active_time)
+//        );
+//        activityHandler = new ActivityCardHandler(activityElements);
 
         // Initialize health card
         View healthCard = view.findViewById(R.id.health_card);
@@ -106,7 +106,7 @@ public class DashboardFragment extends Fragment {
         // Initialize handlers
         Context context = requireContext();
         weatherHandler.initialize(context);
-        activityHandler.initialize(context);
+//        activityHandler.initialize(context);
         healthHandler.initialize(context);
     }
 
@@ -114,7 +114,7 @@ public class DashboardFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         if (weatherHandler != null) weatherHandler.cleanup();
-        if (activityHandler != null) activityHandler.cleanup();
+//        if (activityHandler != null) activityHandler.cleanup();
         if (healthHandler != null) healthHandler.cleanup();
     }
 }

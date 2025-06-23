@@ -136,4 +136,27 @@ public class SpeedGraphView extends View {
         canvas.drawPath(fillPath, fillPaint);
         canvas.drawPath(path, linePaint);
     }
+
+    public void setTextColor(int color) {
+        textPaint.setColor(color);
+        invalidate();
+    }
+
+    public void setGridColor(int color) {
+        axisPaint.setColor(color);
+        invalidate();
+    }
+
+    public void setLineColor(int color) {
+        linePaint.setColor(color);
+        fillPaint.setColor(color);
+        fillPaint.setAlpha(50); // Keep transparency for fill
+        invalidate();
+    }
+
+    @Override
+    public void setBackgroundColor(int color) {
+        super.setBackgroundColor(color);
+        invalidate();
+    }
 }

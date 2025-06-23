@@ -104,4 +104,25 @@ public class StepsGraphView extends View {
             i++;
         }
     }
+
+    public void setTextColor(int color) {
+        textPaint.setColor(color);
+        invalidate();
+    }
+
+    public void setGridColor(int color) {
+        axisPaint.setColor(color);
+        invalidate();
+    }
+
+    public void setBarColor(int color) {  // Instead of setLineColor for bar graph
+        barPaint.setColor(color);
+        invalidate();
+    }
+
+    @Override
+    public void setBackgroundColor(int color) {
+        super.setBackgroundColor(color);
+        invalidate();
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.mad_project.ui.pages.sessions.fragments;
 
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -45,44 +46,79 @@ public class StepsStatisticsFragment extends BaseStatisticsFragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
+        super.onViewCreated(view, savedInstanceState);  // This will initialize viewModel
         stepsGraph = view.findViewById(R.id.steps_graph);
         totalStepsText = view.findViewById(R.id.text_total_steps);
         stepsPerMinuteText = view.findViewById(R.id.text_steps_per_minute);
-        viewModel = new ViewModelProvider(requireActivity()).get(SessionViewModel.class);
         stepsPerMinute = new HashMap<>();
 
         setupChart();
 
         if (isRealTime) {
             updateHandler = new Handler(Looper.getMainLooper());
-            startRealTimeUpdates();
             sessionStartTime = LocalDateTime.now();
-        } else if (sessionId != -1) {
-            loadHistoricalData();
+            startRealTimeUpdates();
         }
+        loadHistoricalData();  // Load historical data for both real-time and historical views
+    }
+
+
+    @Override
+    protected void startRealTimeUpdates() {
+        if (updateHandler == null) {
+            updateHandler = new Handler(Looper.getMainLooper());
+        }
+
+        updateHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (isRealTime && isAdded()) {
+                    updateStatistics();
+                    updateHandler.postDelayed(this, UPDATE_INTERVAL);
+                }
+            }
+        });
     }
 
     @Override
     protected void setupChart() {
-        // StepsGraphView handles its own initialization
+        if (!isAdded()) return;
+
+        stepsGraph.setBackgroundColor(requireContext().getColor(
+                isNightMode() ? R.color.graph_background_dark : R.color.graph_background_light));
+        stepsGraph.setTextColor(requireContext().getColor(
+                isNightMode() ? R.color.graph_text_dark : R.color.graph_text_light));
+        stepsGraph.setGridColor(requireContext().getColor(
+                isNightMode() ? R.color.graph_grid_dark : R.color.graph_grid_light));
+        stepsGraph.setBarColor(requireContext().getColor(
+                isNightMode() ? R.color.graph_line_dark : R.color.graph_line_light));
     }
 
-    private void startRealTimeUpdates() {
-        updateHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                updateStatistics();
-                if (isRealTime && isAdded()) {
-                    updateHandler.postDelayed(this, UPDATE_INTERVAL);
-                }
-            }
-        }, UPDATE_INTERVAL);
+    protected boolean isNightMode() {
+        int nightModeFlags = requireContext().getResources().getConfiguration().uiMode &
+                Configuration.UI_MODE_NIGHT_MASK;
+        return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (isRealTime) {
+            startRealTimeUpdates();
+        }
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (updateHandler != null) {
+            updateHandler.removeCallbacksAndMessages(null);
+        }
     }
 
     @Override
     protected void updateStatistics() {
-        if (!isAdded()) return;
+        if (!isAdded() || sessionStartTime == null) return;
 
         Integer currentSteps = statisticsManager.getValue(StatisticsType.STEPS);
         if (currentSteps == null) return;
@@ -103,22 +139,25 @@ public class StepsStatisticsFragment extends BaseStatisticsFragment {
         }
 
         // Update UI
-        stepsGraph.updateSteps(stepsPerMinute);
-        totalStepsText.setText(String.format("Total Steps: %d", totalSteps));
-        stepsPerMinuteText.setText(String.format("Steps/min: %d", currentMinuteSteps));
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                stepsGraph.updateSteps(stepsPerMinute);
+                totalStepsText.setText(String.format("Total Steps: %d", totalSteps));
+                stepsPerMinuteText.setText(String.format("Steps/min: %d", currentMinuteSteps));
+            });
+        }
     }
 
-    private void loadHistoricalData() {
-        if (sessionId != -1) {
-            viewModel.getSessionStatistics(sessionId).observe(getViewLifecycleOwner(), this::updateHistoricalGraph);
-        }
+    @Override
+    protected void loadHistoricalData() {
+        if (!isAdded() || viewModel == null) return;  // Add safety check
+        super.loadHistoricalData();
     }
 
     private void updateHistoricalGraph(List<HikingStatisticsEntity> statistics) {
         if (statistics == null || statistics.isEmpty()) return;
 
         Map<Integer, Integer> historicalSteps = new HashMap<>();
-        sessionStartTime = statistics.get(0).getDateTime();
         int totalSteps = 0;
 
         for (HikingStatisticsEntity stat : statistics) {
@@ -129,11 +168,16 @@ public class StepsStatisticsFragment extends BaseStatisticsFragment {
         }
 
         stepsGraph.updateSteps(historicalSteps);
-        totalStepsText.setText(String.format("Total Steps: %d", totalSteps));
+        if (getActivity() != null) {
+            int finalTotalSteps = totalSteps;
+            getActivity().runOnUiThread(() -> {
+                totalStepsText.setText(String.format("Total Steps: %d", finalTotalSteps));
+                int avgStepsPerMinute = finalTotalSteps / Math.max(1, historicalSteps.size());
+                stepsPerMinuteText.setText(String.format("Avg Steps/min: %d", avgStepsPerMinute));
+            });
+        }
 
-        // Calculate average steps per minute
-        int avgStepsPerMinute = totalSteps / Math.max(1, historicalSteps.size());
-        stepsPerMinuteText.setText(String.format("Avg Steps/min: %d", avgStepsPerMinute));
+        lastTotalSteps = totalSteps;
     }
 
     @Override
@@ -142,5 +186,10 @@ public class StepsStatisticsFragment extends BaseStatisticsFragment {
         if (updateHandler != null) {
             updateHandler.removeCallbacksAndMessages(null);
         }
+    }
+
+    @Override
+    protected void onHistoricalDataLoaded(List<HikingStatisticsEntity> statistics) {
+        updateHistoricalGraph(statistics);
     }
 }
