@@ -29,6 +29,7 @@ public class SensorsController {
     private final StatisticsCalculator statisticsCalculator;
     private final TrackingWorkManager trackingWorkManager;
     private final Handler mainHandler;
+    private FlashlightHandler flashlightHandler;
 
     // LiveData for tracking status only
     private final MutableLiveData<Boolean> isTracking = new MutableLiveData<>(false);
@@ -39,6 +40,7 @@ public class SensorsController {
         this.statisticsManager = StatisticsManager.getInstance();
         this.statisticsCalculator = StatisticsCalculator.getInstance(context);
         this.mainHandler = new Handler(Looper.getMainLooper());
+        this.flashlightHandler = new FlashlightHandler(context);
 
         initializeSensorHandlers();
     }
@@ -128,5 +130,18 @@ public class SensorsController {
 
     public boolean isTracking() {
         return isTracking.getValue() != null && isTracking.getValue();
+    }
+
+
+    public void startSOSFlashlight() {
+        flashlightHandler.startSOS();
+    }
+
+    public void stopSOSFlashlight() {
+        flashlightHandler.stopSOS();
+    }
+
+    public boolean isSOSRunning() {
+        return flashlightHandler.isSOSRunning();
     }
 }

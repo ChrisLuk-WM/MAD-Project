@@ -43,4 +43,8 @@
     <color name="graph_text_dark">#FFFFFF</color>
     <color name="graph_grid_dark">#20FFFFFF</color>
     <color name="graph_line_dark">#64B5F6</color>
+
+    <color name="error">#B00020</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="primary">#6200EE</color>
 </resources>
