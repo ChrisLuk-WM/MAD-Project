@@ -10,10 +10,16 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.mad_project.R;
 import com.example.mad_project.database.entities.HikingSessionEntity;
+import com.example.mad_project.database.entities.HikingStatisticsEntity;
 import com.example.mad_project.ui.BaseActivity;
 import com.example.mad_project.ui.pages.sessions.fragments.MapFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.SharedSessionViewModel;
+
+import org.osmdroid.util.GeoPoint;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +37,7 @@ public class SessionDetailsActivity extends BaseActivity {
     private TextView avgSpeedText;
     private TextView stepsText;
     private TextView elevationGainText;
-
+    private SharedSessionViewModel sharedViewModel;
     @Override
     protected int getLayoutResourceId() {
         return R.layout.activity_session_details;
@@ -49,13 +55,21 @@ public class SessionDetailsActivity extends BaseActivity {
         }
 
         viewModel = new ViewModelProvider(this).get(SessionViewModel.class);
+        // Initialize SharedSessionViewModel
+        sharedViewModel = new ViewModelProvider(this,
+                new SharedSessionViewModel.Factory(viewModel))
+                .get(SharedSessionViewModel.class);
 
         if (savedInstanceState == null) {
             mapFragment = new MapFragment();
+            mapFragment.setRealTimeTracking(false);
             getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.map_container, mapFragment)
                     .commit();
+
+            // Initialize shared session data for historical view
+            sharedViewModel.initializeSession(sessionId, false);
         }
 
         observeSessionData();
@@ -85,6 +99,24 @@ public class SessionDetailsActivity extends BaseActivity {
                 updateUI(session);
             }
         });
+
+        // Observe statistics data for map updates
+        sharedViewModel.getSessionStatistics().observe(this, statistics -> {
+            if (statistics != null && !statistics.isEmpty() && mapFragment != null) {
+                List<GeoPoint> points = new ArrayList<>();
+                for (HikingStatisticsEntity stat : statistics) {
+                    points.add(new GeoPoint(stat.getLatitude(), stat.getLongitude()));
+                }
+                mapFragment.drawPath(points);
+            }
+        });
+    }
+
+    protected void onDestroy() {
+        super.onDestroy();
+        if (sharedViewModel != null) {
+            sharedViewModel.cleanup();
+        }
     }
 
     private void updateUI(HikingSessionEntity session) {

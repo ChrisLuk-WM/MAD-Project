@@ -25,11 +25,6 @@ import java.util.List;
 
 public class ElevationGraphFragment extends BaseStatisticsFragment {
     private ElevationGraphView elevationGraph;
-    private SessionViewModel viewModel;
-    private Handler updateHandler;
-    private static final int UPDATE_INTERVAL = 5000; // 5 seconds
-    private LocalDateTime sessionStartTime;
-    private List<ElevationGraphView.Entry> entries = new ArrayList<>();
 
     @Nullable
     @Override
@@ -39,23 +34,13 @@ public class ElevationGraphFragment extends BaseStatisticsFragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);  // This will initialize viewModel
+    protected void initializeViews(View view) {
         elevationGraph = view.findViewById(R.id.elevation_graph);
-
-        setupChart();
-
-        if (isRealTime) {
-            updateHandler = new Handler(Looper.getMainLooper());
-            sessionStartTime = LocalDateTime.now();
-            startRealTimeUpdates();
-        }
-        loadHistoricalData();  // Load historical data for both real-time and historical views
     }
 
     @Override
     protected void setupChart() {
-        if (!isAdded()) return;
+        if (!isAdded() || elevationGraph == null) return;
 
         elevationGraph.setBackgroundColor(requireContext().getColor(
                 isNightMode() ? R.color.graph_background_dark : R.color.graph_background_light));
@@ -67,71 +52,16 @@ public class ElevationGraphFragment extends BaseStatisticsFragment {
                 isNightMode() ? R.color.graph_line_dark : R.color.graph_line_light));
     }
 
-    protected boolean isNightMode() {
-        int nightModeFlags = requireContext().getResources().getConfiguration().uiMode &
-                Configuration.UI_MODE_NIGHT_MASK;
-        return nightModeFlags == Configuration.UI_MODE_NIGHT_YES;
-    }
-
     @Override
-    protected void startRealTimeUpdates() {
-        if (updateHandler == null) {
-            updateHandler = new Handler(Looper.getMainLooper());
-        }
+    protected void onStatisticsUpdated(List<HikingStatisticsEntity> statistics) {
+        if (statistics == null || statistics.isEmpty() || sessionStartTime == null) return;
 
-        updateHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if (isRealTime && isAdded()) {
-                    updateStatistics();
-                    updateHandler.postDelayed(this, UPDATE_INTERVAL);
-                }
-            }
-        }, UPDATE_INTERVAL);
-    }
-
-    @Override
-    protected void updateStatistics() {
-        if (!isAdded()) return;
-
-        Double currentElevation = statisticsManager.getValue(StatisticsType.ALTITUDE);
-        if (currentElevation == null) return;
-
-        float elevationMeters = currentElevation.floatValue();
-        float timeSeconds = sessionStartTime != null ?
-                (float) ChronoUnit.SECONDS.between(sessionStartTime, LocalDateTime.now()) : 0f;
-
-        elevationGraph.addEntry(timeSeconds, elevationMeters);
-    }
-
-    @Override
-    protected void loadHistoricalData() {
-        if (!isAdded() || viewModel == null) return;  // Add safety check
-        super.loadHistoricalData();
-    }
-
-    @Override
-    protected void onHistoricalDataLoaded(List<HikingStatisticsEntity> statistics) {
-        updateHistoricalGraph(statistics);
-    }
-
-    private void updateHistoricalGraph(List<HikingStatisticsEntity> statistics) {
-        if (statistics == null || statistics.isEmpty()) return;
-
-        entries.clear();
+        List<ElevationGraphView.Entry> entries = new ArrayList<>();
         for (HikingStatisticsEntity stat : statistics) {
             float timeSeconds = (float) ChronoUnit.SECONDS.between(sessionStartTime, stat.getDateTime());
-            entries.add(new ElevationGraphView.Entry(timeSeconds, (float) stat.getAltitude()));
+            float elevationMeters = (float) stat.getAltitude();
+            entries.add(new ElevationGraphView.Entry(timeSeconds, elevationMeters));
         }
-
-        elevationGraph.setEntries(new ArrayList<>(entries));
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        if (updateHandler != null) {
-            updateHandler.removeCallbacksAndMessages(null);
-        }
+        elevationGraph.setEntries(entries);
     }
 }

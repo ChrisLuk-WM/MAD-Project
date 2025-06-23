@@ -5,23 +5,33 @@ import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.mad_project.R;
 import com.example.mad_project.database.entities.HikingSessionEntity;
+import com.example.mad_project.database.entities.HikingStatisticsEntity;
 import com.example.mad_project.ui.BaseActivity;
 import com.example.mad_project.ui.pages.sessions.fragments.ElevationGraphFragment;
 import com.example.mad_project.ui.pages.sessions.fragments.MapFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.SharedSessionViewModel;
 import com.example.mad_project.ui.pages.sessions.fragments.SpeedGraphFragment;
 import com.example.mad_project.ui.pages.sessions.fragments.StepsStatisticsFragment;
 
+import org.osmdroid.util.GeoPoint;
+
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class SessionAnalysisActivity extends BaseActivity {
+    private static final String TAG = "SessionAnalysisActivity";
+    private SharedSessionViewModel sharedViewModel;
     private SessionViewModel viewModel;
     private long sessionId;
+    private MapFragment mapFragment;
 
     // UI elements
     private TextView startTimeText;
@@ -39,74 +49,79 @@ public class SessionAnalysisActivity extends BaseActivity {
 
     @Override
     protected boolean useNavigationDrawer() {
-        return false; // Disable navigation drawer for this activity
+        return false;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        sessionId = getIntent().getLongExtra("session_id", -1);
-        String source = getIntent().getStringExtra("source");
+        super.onCreate(savedInstanceState);
 
+        sessionId = getIntent().getLongExtra("session_id", -1);
         if (sessionId == -1) {
             finish();
             return;
         }
 
+        // Initialize ViewModels
         viewModel = new ViewModelProvider(this).get(SessionViewModel.class);
-        super.onCreate(savedInstanceState);
+        sharedViewModel = new ViewModelProvider(this,
+                new SharedSessionViewModel.Factory(viewModel))
+                .get(SharedSessionViewModel.class);
 
+        // Initialize shared session data BEFORE creating fragments
+        sharedViewModel.initializeSession(sessionId, false);
+
+        // Setup action bar
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
 
-        if (savedInstanceState == null) {
-            // Add Map Fragment
-            getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.map_container, createMapFragment())
-                    .replace(R.id.speed_graph_container, createSpeedFragment(false))
-                    .replace(R.id.elevation_graph_container, createElevationFragment(false))
-                    .replace(R.id.steps_stats_container, createStepsFragment(false))
-                    .commit();
-        }
+
+        setupFragments(savedInstanceState);
 
         loadSessionData();
     }
 
-    private Fragment createMapFragment() {
-        MapFragment fragment = new MapFragment();
-        Bundle args = new Bundle();
-        args.putLong("sessionId", sessionId);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    private void setupFragments(Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            // Create fragments with arguments
+            Bundle args = new Bundle();
+            args.putLong("sessionId", sessionId);
+            args.putBoolean("isRealTime", false);
 
-    private Fragment createSpeedFragment(boolean isRealTime) {
-        SpeedGraphFragment fragment = new SpeedGraphFragment();
-        Bundle args = new Bundle();
-        args.putBoolean("isRealTime", isRealTime);
-        args.putLong("sessionId", sessionId);
-        fragment.setArguments(args);
-        return fragment;
-    }
+            // Map Fragment
+            mapFragment = new MapFragment();
+            mapFragment.setArguments(args);
 
-    private Fragment createElevationFragment(boolean isRealTime) {
-        ElevationGraphFragment fragment = new ElevationGraphFragment();
-        Bundle args = new Bundle();
-        args.putBoolean("isRealTime", isRealTime);
-        args.putLong("sessionId", sessionId);
-        fragment.setArguments(args);
-        return fragment;
-    }
+            // Statistics Fragments
+            SpeedGraphFragment speedFragment = new SpeedGraphFragment();
+            speedFragment.setArguments(new Bundle(args));
 
-    private Fragment createStepsFragment(boolean isRealTime) {
-        StepsStatisticsFragment fragment = new StepsStatisticsFragment();
-        Bundle args = new Bundle();
-        args.putBoolean("isRealTime", isRealTime);
-        args.putLong("sessionId", sessionId);
-        fragment.setArguments(args);
-        return fragment;
+            ElevationGraphFragment elevationFragment = new ElevationGraphFragment();
+            elevationFragment.setArguments(new Bundle(args));
+
+            StepsStatisticsFragment stepsFragment = new StepsStatisticsFragment();
+            stepsFragment.setArguments(new Bundle(args));
+
+            // Add fragments
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.map_container, mapFragment)
+                    .add(R.id.speed_graph_container, speedFragment)
+                    .add(R.id.elevation_graph_container, elevationFragment)
+                    .add(R.id.steps_stats_container, stepsFragment)
+                    .commitNow();
+
+            // Configure map fragment
+            mapFragment.setRealTimeTracking(false);
+        } else {
+            // Restore existing fragments
+            mapFragment = (MapFragment) getSupportFragmentManager()
+                    .findFragmentById(R.id.map_container);
+            if (mapFragment != null) {
+                mapFragment.setRealTimeTracking(false);
+            }
+        }
     }
 
     @Override
@@ -120,10 +135,33 @@ public class SessionAnalysisActivity extends BaseActivity {
         elevationText = findViewById(R.id.text_elevation);
     }
 
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putLong("sessionId", sessionId);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        sessionId = savedInstanceState.getLong("sessionId", -1);
+    }
+
     private void loadSessionData() {
         viewModel.getSession(sessionId).observe(this, session -> {
             if (session != null) {
                 updateUI(session);
+
+                // Load path data for the map
+                viewModel.getSessionStatistics(sessionId).observe(this, statistics -> {
+                    if (statistics != null && !statistics.isEmpty() && mapFragment != null) {
+                        List<GeoPoint> pathPoints = new ArrayList<>();
+                        for (HikingStatisticsEntity stat : statistics) {
+                            pathPoints.add(new GeoPoint(stat.getLatitude(), stat.getLongitude()));
+                        }
+                        mapFragment.drawPath(pathPoints);
+                    }
+                });
             }
         });
     }
@@ -157,10 +195,8 @@ public class SessionAnalysisActivity extends BaseActivity {
         if (item.getItemId() == android.R.id.home) {
             String source = getIntent().getStringExtra("source");
             if ("history".equals(source)) {
-                // Go back to history
                 finish();
             } else {
-                // Go to session activity
                 Intent intent = new Intent(this, SessionActivity.class);
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);

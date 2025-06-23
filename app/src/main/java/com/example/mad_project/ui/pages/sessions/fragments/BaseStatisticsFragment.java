@@ -2,6 +2,8 @@ package com.example.mad_project.ui.pages.sessions.fragments;
 
 import android.content.res.Configuration;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -23,6 +25,7 @@ public abstract class BaseStatisticsFragment extends Fragment {
     protected boolean isRealTime = false;
     protected long sessionId = -1;
     protected SessionViewModel viewModel;
+    protected SharedSessionViewModel sharedViewModel;
     protected LocalDateTime sessionStartTime;
 
     @Override
@@ -36,41 +39,45 @@ public abstract class BaseStatisticsFragment extends Fragment {
             isRealTime = args.getBoolean("isRealTime", false);
             sessionId = args.getLong("sessionId", -1);
         }
+
+        sharedViewModel = new ViewModelProvider(requireActivity(),
+                new SharedSessionViewModel.Factory(
+                        new ViewModelProvider(requireActivity()).get(SessionViewModel.class)
+                )).get(SharedSessionViewModel.class);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Initialize ViewModel in onViewCreated
-        viewModel = new ViewModelProvider(requireActivity()).get(SessionViewModel.class);
+        initializeViews(view);
+        setupChart();
+        observeSharedData();
+    }
+
+    protected abstract void initializeViews(View view);
+
+    protected void observeSharedData() {
+        sharedViewModel.getSessionStartTime().observe(getViewLifecycleOwner(), startTime -> {
+            sessionStartTime = startTime;
+        });
+
+        sharedViewModel.getSessionStatistics().observe(getViewLifecycleOwner(), statistics -> {
+            if (statistics != null && !statistics.isEmpty() && sessionStartTime != null) {
+                onStatisticsUpdated(statistics);
+            }
+        });
     }
 
     public void onSessionActive(long activeSessionId) {
         this.sessionId = activeSessionId;
         if (isRealTime) {
-            // Set current time as initial start time
             sessionStartTime = LocalDateTime.now();
             setupChart();
-            // Load historical data if any exists
-            loadHistoricalData();
-            // Start real-time updates
-            startRealTimeUpdates();
+            // Initialize session in SharedViewModel instead of handling it here
+            sharedViewModel.initializeSession(sessionId, true);
         }
     }
 
-    protected abstract void startRealTimeUpdates();
-    protected void loadHistoricalData() {
-        if (sessionId != -1 && viewModel != null) {  // Add null check
-            viewModel.getSessionStatistics(sessionId).observe(getViewLifecycleOwner(), statistics -> {
-                if (statistics != null && !statistics.isEmpty()) {
-                    sessionStartTime = statistics.get(0).getDateTime();
-                    onHistoricalDataLoaded(statistics);
-                }
-            });
-        }
-    }
-
-    protected abstract void updateStatistics();
     protected abstract void setupChart();
 
     protected boolean isNightMode() {
@@ -84,26 +91,5 @@ public abstract class BaseStatisticsFragment extends Fragment {
         setupChart(); // Re-setup chart when configuration changes (e.g., dark mode toggle)
     }
 
-    protected void initializeSessionStartTime(long sessionId, Runnable onInitialized) {
-        if (sessionId != -1) {
-            viewModel.getSessionStatistics(sessionId).observe(getViewLifecycleOwner(), statistics -> {
-                if (statistics != null && !statistics.isEmpty()) {
-                    sessionStartTime = statistics.get(0).getDateTime();
-                    onHistoricalDataLoaded(statistics);
-                } else {
-                    sessionStartTime = LocalDateTime.now();
-                }
-                if (onInitialized != null) {
-                    onInitialized.run();
-                }
-            });
-        } else {
-            sessionStartTime = LocalDateTime.now();
-            if (onInitialized != null) {
-                onInitialized.run();
-            }
-        }
-    }
-
-    protected abstract void onHistoricalDataLoaded(List<HikingStatisticsEntity> statistics);
+    protected abstract void onStatisticsUpdated(List<HikingStatisticsEntity> statistics);
 }

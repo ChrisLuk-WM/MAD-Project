@@ -1,6 +1,7 @@
 package com.example.mad_project.ui.pages.sessions;
 
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -16,17 +17,23 @@ import android.view.MenuItem;
 
 import com.example.mad_project.R;
 import com.example.mad_project.database.entities.HikingSessionEntity;
+import com.example.mad_project.database.entities.HikingStatisticsEntity;
 import com.example.mad_project.sensors.SensorsController;
 import com.example.mad_project.statistics.StatisticsCalculator;
 import com.example.mad_project.ui.BaseActivity;
 import com.example.mad_project.ui.pages.sessions.fragments.BaseStatisticsFragment;
 import com.example.mad_project.ui.pages.sessions.fragments.ElevationGraphFragment;
 import com.example.mad_project.ui.pages.sessions.fragments.MapFragment;
+import com.example.mad_project.ui.pages.sessions.fragments.SharedSessionViewModel;
 import com.example.mad_project.ui.pages.sessions.fragments.SpeedGraphFragment;
 import com.example.mad_project.ui.pages.sessions.fragments.StepsStatisticsFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.osmdroid.util.GeoPoint;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SessionActivity extends BaseActivity implements PlannedSessionAdapter.OnSessionActionListener {
     private MapFragment mapFragment;
@@ -37,6 +44,7 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
     private RecyclerView plannedSessionsRecycler;
     private PlannedSessionAdapter plannedSessionsAdapter;
     private TextView emptyView;
+    private SharedSessionViewModel sharedViewModel;
 
     @Override
     protected int getLayoutResourceId() {
@@ -47,6 +55,10 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
     protected void onCreate(Bundle savedInstanceState) {
         try {
             viewModel = new ViewModelProvider(this).get(SessionViewModel.class);
+            // Initialize SharedSessionViewModel
+            sharedViewModel = new ViewModelProvider(this,
+                    new SharedSessionViewModel.Factory(viewModel))
+                    .get(SharedSessionViewModel.class);
         } catch (Exception e) {
             e.printStackTrace();
             Log.d("SessionActivity", e.getMessage());
@@ -56,9 +68,11 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
 
         if (savedInstanceState == null) {
             // Add Map Fragment
+            mapFragment = new MapFragment();
+            mapFragment.setRealTimeTracking(true);
             getSupportFragmentManager()
                     .beginTransaction()
-                    .replace(R.id.map_container, new MapFragment())
+                    .replace(R.id.map_container, mapFragment)
                     .commit();
 
             // Add Statistics Fragments for active session
@@ -159,12 +173,29 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
             plannedSessionsView.setVisibility(View.GONE);
             fabEndSession.setVisibility(View.VISIBLE);
 
-            // Notify fragments about active session
-            for (Fragment fragment : getSupportFragmentManager().getFragments()) {
-                if (fragment instanceof BaseStatisticsFragment) {
-                    ((BaseStatisticsFragment) fragment).onSessionActive(session.getId());
-                }
+            // Initialize shared session data for real-time tracking
+            sharedViewModel.initializeSession(session.getId(), true);
+
+            // Load historical path data if available
+            if (mapFragment != null) {
+                viewModel.getSessionStatistics(session.getId()).observe(this, statistics -> {
+                    if (statistics != null && !statistics.isEmpty()) {
+                        List<GeoPoint> points = new ArrayList<>();
+                        for (HikingStatisticsEntity stat : statistics) {
+                            points.add(new GeoPoint(stat.getLatitude(), stat.getLongitude()));
+                        }
+                        mapFragment.drawPath(points);
+                    }
+                });
             }
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (sharedViewModel != null) {
+            sharedViewModel.cleanup();
         }
     }
 
@@ -223,15 +254,14 @@ public class SessionActivity extends BaseActivity implements PlannedSessionAdapt
         if (viewModel != null) {
             SensorsController.getInstance(this).stopTracking();
 
+            // Save the current path points if needed
+            if (mapFragment != null) {
+                List<GeoPoint> finalPath = mapFragment.getPathPoints();
+                // You can save these points to your database if needed
+            }
+
             viewModel.endCurrentSession().observe(this, sessionId -> {
                 if (sessionId != null) {
-                    // Stop any ongoing updates in fragments
-                    for (Fragment fragment : getSupportFragmentManager().getFragments()) {
-                        if (fragment instanceof BaseStatisticsFragment) {
-                            ((BaseStatisticsFragment) fragment).onDestroyView();
-                        }
-                    }
-
                     Intent intent = new Intent(this, SessionAnalysisActivity.class);
                     intent.putExtra("session_id", sessionId);
                     intent.putExtra("source", "session");
