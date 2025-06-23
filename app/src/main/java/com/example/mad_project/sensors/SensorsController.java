@@ -5,6 +5,7 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
@@ -30,7 +31,7 @@ public class SensorsController {
     private final TrackingWorkManager trackingWorkManager;
     private final Handler mainHandler;
     private FlashlightHandler flashlightHandler;
-
+    private FingerprintHandler fingerprintHandler;
     // LiveData for tracking status only
     private final MutableLiveData<Boolean> isTracking = new MutableLiveData<>(false);
 
@@ -41,6 +42,7 @@ public class SensorsController {
         this.statisticsCalculator = StatisticsCalculator.getInstance(context);
         this.mainHandler = new Handler(Looper.getMainLooper());
         this.flashlightHandler = new FlashlightHandler(context);
+        this.fingerprintHandler = new FingerprintHandler(context);
 
         initializeSensorHandlers();
     }
@@ -143,5 +145,21 @@ public class SensorsController {
 
     public boolean isSOSRunning() {
         return flashlightHandler.isSOSRunning();
+    }
+
+    public void authenticateFingerprint(FragmentActivity activity, FingerprintHandler.FingerprintCallback callback) {
+        fingerprintHandler.authenticate(activity, callback);
+    }
+
+    public boolean isFingerprintVerified() {
+        return fingerprintHandler.isVerified();
+    }
+
+    public void resetFingerprintAuth() {
+        fingerprintHandler.reset();
+    }
+
+    public boolean isFingerprintAvailable() {
+        return fingerprintHandler.isAvailable();
     }
 }

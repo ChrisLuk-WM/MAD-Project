@@ -19,6 +19,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.mad_project.R;
 import com.example.mad_project.database.entities.EmergencyContactEntity;
 import com.example.mad_project.database.entities.ProfileEntity;
+import com.example.mad_project.sensors.FingerprintHandler;
+import com.example.mad_project.sensors.SensorsController;
 import com.example.mad_project.ui.BaseActivity;
 import com.example.mad_project.utils.ImageUtils;
 import com.google.android.material.button.MaterialButton;
@@ -51,6 +53,8 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
     private ProfileViewModel viewModel;
     private EmergencyContactViewModel emergencyContactViewModel;
     private static final int PICK_IMAGE_REQUEST = 1;
+    private SensorsController sensorsController;
+    private View contentLayout;
 
     private Long currentProfileId = null;
     @Override
@@ -61,24 +65,62 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sensorsController = SensorsController.getInstance(this);
 
-        // Initialize ProfileViewModel
-        viewModel = new ViewModelProvider(this).get(ProfileViewModel.class);
+        // Hide content initially
+        contentLayout = findViewById(R.id.profile_content_layout);
+        if (contentLayout != null) {
+            contentLayout.setVisibility(View.INVISIBLE);
+        }
 
-        // Initialize EmergencyContactViewModel with default profile ID
-        EmergencyContactViewModel.Factory factory =
-                new EmergencyContactViewModel.Factory(getApplication(), getDefaultProfileId());
-        emergencyContactViewModel = new ViewModelProvider(this, factory)
-                .get(EmergencyContactViewModel.class);
+        // Check fingerprint
+        checkFingerprint();
+    }
 
-        // Load existing profile
-        viewModel.getCurrentProfile().observe(this, profile -> {
-            if (profile != null) {
-                currentProfileId = profile.getId();
-                updateUI(profile);
-                initializeEmergencyContactViewModel(currentProfileId);
+    private void checkFingerprint() {
+        if (!sensorsController.isFingerprintVerified()) {
+            if (sensorsController.isFingerprintAvailable()) {
+                sensorsController.authenticateFingerprint(this, new FingerprintHandler.FingerprintCallback() {
+                    @Override
+                    public void onSuccess() {
+                        runOnUiThread(() -> {
+                            if (contentLayout != null) {
+                                contentLayout.setVisibility(View.VISIBLE);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runOnUiThread(() -> {
+                            new MaterialAlertDialogBuilder(MyProfileActivity.this)
+                                    .setTitle("Authentication Failed")
+                                    .setMessage(error)
+                                    .setPositiveButton("Try Again", (dialog, which) -> checkFingerprint())
+                                    .setNegativeButton("Cancel", (dialog, which) -> finish())
+                                    .show();
+                        });
+                    }
+                });
+            } else {
+                // No fingerprint available
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Authentication Not Available")
+                        .setMessage("Fingerprint authentication is not available on this device.")
+                        .setPositiveButton("Continue", (dialog, which) -> {
+                            if (contentLayout != null) {
+                                contentLayout.setVisibility(View.VISIBLE);
+                            }
+                        })
+                        .setNegativeButton("Cancel", (dialog, which) -> finish())
+                        .show();
             }
-        });
+        } else {
+            // Already verified
+            if (contentLayout != null) {
+                contentLayout.setVisibility(View.VISIBLE);
+            }
+        }
     }
 
     private void initializeEmergencyContactViewModel(long profileId) {
@@ -314,6 +356,13 @@ public class MyProfileActivity extends BaseActivity implements EmergencyContactA
                 .setMessage(error)
                 .setPositiveButton("OK", null)
                 .show();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sensorsController.resetFingerprintAuth();
+        checkFingerprint();
     }
 
     @Override
